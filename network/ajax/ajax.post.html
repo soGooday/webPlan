@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- 学习参照地址  https://www.bilibili.com/video/BV1WC4y1b78y?p=1 -->
+    <!-- 学习参照地址 https://developer.mozilla.org/zh-CN/docs/Web/API/XMLHttpRequest/response -->
+</head>
+<body>
+    <Button>发送ajax</Button>
+    <div></div>
+    <script>
+        let button = document.querySelectorAll('button');
+        let div = document.querySelector('div');
+        button[0].onclick=function(){
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST','http://192.168.125.19:8080');
+            xhr.send("{num:1}");
+            xhr.onreadystatechange = function(res){
+                if(xhr.readyState === 4){
+                    if(xhr.status >=200 && xhr.status <300){
+                        console.log(xhr.response);
+                        console.log(xhr.responseText); 
+                        div.innerHTML =xhr.responseText ;
+                    }
+                    
+                }
+            }
+
+
+            xhr.onloadend = function(res){
+                console.log('onloadend:',res)
+            }
+            xhr.onloadstart= function(res){
+                console.log('onloadstart:',res)
+            }
+        
+        }
+
+    </script>
+</body>
+</html>
