@@ -1,0 +1,86 @@
+{
+  "id": "1288023",
+  "name": "学习",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "18516628",
+      "name": "爱宠10",
+      "font_class": "aichong10",
+      "unicode": "ef6f",
+      "unicode_decimal": 61295
+    },
+    {
+      "icon_id": "18516645",
+      "name": "爱宠27",
+      "font_class": "aichong27",
+      "unicode": "ef80",
+      "unicode_decimal": 61312
+    },
+    {
+      "icon_id": "13751188",
+      "name": "星星",
+      "font_class": "xingxing",
+      "unicode": "e604",
+      "unicode_decimal": 58884
+    },
+    {
+      "icon_id": "11488000",
+      "name": "category",
+      "font_class": "category",
+      "unicode": "e747",
+      "unicode_decimal": 59207
+    },
+    {
+      "icon_id": "13547655",
+      "name": "积木",
+      "font_class": "jimu",
+      "unicode": "e659",
+      "unicode_decimal": 58969
+    },
+    {
+      "icon_id": "13547656",
+      "name": "裤子",
+      "font_class": "kuzi",
+      "unicode": "e65a",
+      "unicode_decimal": 58970
+    },
+    {
+      "icon_id": "13547663",
+      "name": "帽子",
+      "font_class": "maozi",
+      "unicode": "e65b",
+      "unicode_decimal": 58971
+    },
+    {
+      "icon_id": "13547667",
+      "name": "围脖",
+      "font_class": "weibo",
+      "unicode": "e65c",
+      "unicode_decimal": 58972
+    },
+    {
+      "icon_id": "622961",
+      "name": "ZS箭头2",
+      "font_class": "jiantou2",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "2674472",
+      "name": "返回",
+      "font_class": "fanhui",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
+      "icon_id": "2675116",
+      "name": "搜索",
+      "font_class": "sousuo",
+      "unicode": "e632",
+      "unicode_decimal": 58930
+    }
+  ]
+}

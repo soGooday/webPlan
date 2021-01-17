@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        ul{
+            border: 3px red solid;
+            list-style: none;
+            padding: 0;
+        }
+        /*
+        * + 号后面的才会起作用 li 一次往后类推
+        */ 
+        li+li{
+            border-top: 3px red solid;
+        }
+        li{
+            outline-offset: -3px;
+        }
+        li:hover{
+            outline: 3px solid yellow;
+        }
+
+    </style>
+</head>
+<body>
+
+    <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+        <li>4</li>
+        <li>5</li>
+    </ul>
+    
+</body>
+</html>

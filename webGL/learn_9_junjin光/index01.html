@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>立方体</title>
+    <link rel="stylesheet" href="../css/common.css" />
+    <script src="../Tool/matrix.js"></script>
+    <script src="../Tool/tool.js"></script>
+    <script src="../Tool/math.js"></script>
+</head>
+
+<body>
+<canvas id="canvas"></canvas>
+
+<script type="shader-source" id="vertexShader">
+        //浮点数设置为中等精度
+        precision mediump float;
+        // 顶点坐标
+        attribute vec3 a_Position;
+        // 顶点颜色
+        attribute vec4 a_Color;
+         // 传递给片元着色器的颜色
+        varying vec4 v_Color;
+        // 顶点法向量
+        attribute vec3 a_Normal;
+        // 传递给片元着色器的法向量
+        varying vec3 v_Normal;
+
+        // 模型视图投影变换矩阵。
+        uniform mat4 u_Matrix;
+
+        void main(){
+            // 将顶点坐标转化成裁剪坐标系下的坐标。
+            gl_Position =  vec4(a_Position, 1);
+            // 将顶点颜色传递给片元着色器
+            v_Color = a_Color;
+            // 将顶点法向量传递给片元着色器
+            v_Normal = a_Normal;
+        }
+    </script>
+<script type="shader-source" id="fragmentShader">
+         //浮点数设置为中等精度
+        precision mediump float;
+        // 片元法向量
+        varying vec3 v_Normal;
+        // 片元颜色
+        varying vec4 v_Color;
+        // 光线颜色
+        uniform vec3 u_LightColor;
+        // 光源位置
+        uniform vec3 u_LightPosition;
+        //灯光的强度因子
+        //uniform float u_AmbientFactor;
+        void main(){
+              // 环境光分量
+              vec3 ambient = 1 * u_LightColor;
+              // 光源照射方向向量
+              vec3 lightDirection = u_LightPosition - vec3(0, 0, 0);
+              // 漫反射因子
+              float diffuseFactor = dot(normalize(lightDirection), normalize(v_Normal));
+              // 如果是负数，说明光线与法向量夹角大于 90 度，此时照不到平面上，所以没有光照，即黑色。
+              diffuseFactor = max(diffuseFactor, 0.0);
+              // 漫反射光照 = 光源颜色 * 漫反射因子。
+              vec3 diffuseLightColor = u_LightColor * diffuseFactor;
+              // 物体在光照下的颜色 = （环境光照 + 漫反射光照） * 物体颜色。
+              gl_FragColor = v_Color * vec4((ambient + diffuseLightColor),1);
+        }
+    </script>
+
+
+<script>
+    //初始化webgl的相关参数var matrix = Matrix4;
+
+
+    let canvas = document.getElementById('canvas');
+    var gl = canvas.getContext('webgl');
+
+    let vertexSource = document.getElementById('vertexShader').innerText;
+    let vartexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vartexShader,vertexSource);
+    gl.compileShader(vartexShader);
+
+
+
+    let fragmentSource = document.getElementById('fragmentShader').innerText;
+    let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader,fragmentSource);
+    gl.compileShader(fragmentShader);
+
+    let program = gl.createProgram();
+    gl.attachShader(program,vartexShader);
+    gl.attachShader(program,fragmentShader);
+    gl.linkProgram(program);
+    // //使用指定的shader代码片段
+    gl.useProgram(program)
+    // console.log('program:',program)
+    // console.error('fragmentShader:',gl.getShaderInfoLog(fragmentShader));
+    // console.error('vartexShader:',gl.getShaderInfoLog(vartexShader));
+
+    console.log('program',gl.getProgramInfoLog(program))
+    let  allInfo  =createCube(3, 3, 3)
+
+    // //准备绘制的相关参数 四角形的顶点与色值
+    let positionsInfo=allInfo.positions
+    let indices = allInfo.indices;
+    let colors = allInfo.colors;
+    var normalInput = [
+        [0, 0, 1],  //前平面
+        [0, 0, -1], //后平面
+        [-1, 0, 0], //左平面
+        [1, 0, 0], //右平面
+        [0, 1, 0], //上平面
+        [0, -1, 0] //下平面
+    ];
+    // 随机生成一个颜色。
+    let color = randomColor();
+    // 找到着色器中的全局变量 u_Color;
+    let u_Matrix = gl.getUniformLocation(program, 'u_Matrix');
+    let a_Position = gl.getAttribLocation(program, 'a_Position');
+    let a_Color = gl.getAttribLocation(program, 'a_Color');
+    var u_AmbientFactor = gl.getUniformLocation(program, 'u_AmbientFactor');
+    var u_LightColor = gl.getUniformLocation(program, 'u_LightColor');
+    var u_LightPosition = gl.getUniformLocation(program,'u_LightPosition');
+    // gl.uniform3f(u_LightPosition, 0, 0, 10);
+    // gl.uniform3f(u_LightColor, 1, 1, 1);
+    gl.uniform1f(u_AmbientFactor,1)
+    //
+    // gl.enableVertexAttribArray(a_Position);
+    // gl.enableVertexAttribArray(a_Color);
+    // // 创建缓冲区
+    // let buffer = gl.createBuffer();
+    // // 绑定缓冲区为当前缓冲
+    // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    // // 设置 a_Position 属性从缓冲区读取数据方式
+    // gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    // // 向缓冲区传递数据
+    // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionsInfo), gl.STATIC_DRAW);
+    //
+    // // 设置颜色的buffer 及其数据
+    // let colorsBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER,colorsBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(colors),gl.STATIC_DRAW);
+    // //设置数值
+    // gl.enableVertexAttribArray(a_Color);
+    // gl.vertexAttribPointer(a_Color,4,gl.FLOAT,false,0,0);
+    //
+    //
+    //
+    // //创建索引缓冲区
+    // let indicesBuffer = gl.createBuffer();
+    // //绑定索引缓冲区
+    // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+    // //向索引缓冲区传递索引数据
+    // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    //
+    // //设置清屏颜色为黑色。
+    // gl.clearColor(0, 0, 0, 1);
+    // //隐藏背面
+    // gl.enable(gl.CULL_FACE);
+    //
+    // var aspect = canvas.width / canvas.height;
+    // //计算正交投影矩阵
+    // var projectionMatrix = matrix.ortho(-aspect * 4, aspect * 4, -4, 4, 100, -100);
+    // //角度转弧度
+    // var deg2radians = window.lib3d.math.deg2radians;
+    // //创建一个单位矩阵 最后赋值给 u_Matrix 使用
+    // var dstMatrix = matrix.identity();
+    // /*渲染*/
+    // function render() {
+    //
+    //     colorNum +=1
+    //     // colorNum = colorNum >256 ? 0:colorNum
+    //     xAngle +=1;
+    //     yAngle +=1;
+    //     zAngle +=1;
+    //     // console.log(deg2radians(yAngle))
+    //     // transformX+=0.01
+    //     //先绕 Y 轴旋转矩阵。
+    //     matrix.rotationY(deg2radians(yAngle), dstMatrix);
+    //     //再绕 X 轴旋转矩阵。
+    //     matrix.rotationX(deg2radians(xAngle), tmpMatrix);
+    //     //再绕 Z 轴旋转矩阵。
+    //     matrix.rotationZ(deg2radians(zAngle), zMatrix);
+    //     //将绕着X轴与Y轴的转动得到最终的旋转矩阵
+    //     matrix.multiply(dstMatrix, tmpMatrix, dstMatrix);
+    //     //将绕着X轴与Y轴的转动得到最终的旋转矩阵与z轴的相连接
+    //     matrix.multiply(dstMatrix, zMatrix, dstMatrix);
+    //     //坐标进行位移
+    //     // matrix.translation(transformX,0,0,dstMatrix);
+    //     //模型投影矩阵。
+    //     matrix.multiply(projectionMatrix, dstMatrix, dstMatrix);
+    //     //给 u_Matrix 赋值 这个值在定点着色器中
+    //     gl.uniformMatrix4fv(u_Matrix, false, dstMatrix);
+    //     //清除屏幕
+    //     gl.clear(gl.COLOR_BUFFER_BIT);
+    //     //绘制
+    //     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    //     //设强度因子
+    //     gl.uniform1f(u_AmbientFactor,ambientFactor.value);
+    //
+    //     //环境光照颜色
+    //     gl.uniform3f(u_LightColor,colorNum,colorNum,colorNum);
+    //     requestAnimationFrame(render);
+    // }
+    //
+    //
+    // var xAngle =0;
+    // var yAngle = 0;
+    // var zAngle = 0;
+    // var colorNum = 0;
+    // var tmpMatrix = matrix.identity();
+    // var zMatrix = matrix.identity();
+    // render();
+
+
+</script>
+</body>
+
+</html>

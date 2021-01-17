@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .iteam{margin-left: -10px;}
+        .list:nth-child(2n){
+            background-color: bisque;
+        }
+        .list:nth-child(2n+1){
+            background-color: aquamarine;
+        }
+        .list{
+            float: left;
+            width: 25%;
+            height: 200px;
+            box-sizing: border-box;
+            border-left: 10px solid #ffff; 
+        } 
+
+    </style>
+</head>
+<body>
+
+    <div class="iteam">
+        <div class="list"></div>
+        <div class="list"></div>
+        <div class="list"></div>
+        <div class="list"></div>
+    </div>
+    
+</body>
+</html>

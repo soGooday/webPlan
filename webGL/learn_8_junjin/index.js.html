@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../Tool/tool.js"></script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script  type="shader-source" id="vertexShader">
+    precision mediump float;
+    // 接收顶点坐标 (x, y)
+    attribute vec2 a_Position;
+    // 接收 canvas 尺寸(width, height)
+    attribute vec2 u_Screen_Size;
+    // 接收JavaScript传递过来的顶点 uv 坐标。
+    attribute vec4 a_Uv;
+    // 将接收的uv坐标传递给片元着色器
+    varying vec4 v_Color;
+    void main(){
+        vec2 position = (a_Position / u_Screen_Size) * 2.0 - 1.0;
+        position = position * vec2(1.0,-1.0);
+        gl_Position = vec4(position, 0, 1);
+        // 将接收到的uv坐标传递给片元着色器
+        v_Color = a_Uv;
+    }
+</script>
+<script  type="shader-source" id="fragmentShader">
+         //设置浮点数精度为中等。
+        precision mediump float;
+        //接收 JavaScript 传过来的颜色值（rgba）。
+        varying vec4 v_Color;
+        void main(){
+          vec4 color = v_Color / vec4(255, 255, 255, 1);
+          gl_FragColor = color;
+       }
+</script>
+
+
+<script>
+    // import matrix4 from '../Tool/tool.js'
+    //初始化webgl的相关参数
+    console.log('createCube(1, 1, 1);:',createCube(1, 1, 1))
+    let canvas = document.getElementById('canvas');
+    var webgl = canvas.getContext('webgl');
+
+    let vertexSource = document.getElementById('vertexShader').innerText;
+    let vartexShader = webgl.createShader(webgl.VERTEX_SHADER);
+    webgl.shaderSource(vartexShader,vertexSource);
+    webgl.compileShader(vartexShader);
+
+    let fragmentSource = document.getElementById('fragmentShader').innerText;
+    let fragmentShader = webgl.createShader(webgl.FRAGMENT_SHADER);
+    webgl.shaderSource(fragmentShader,fragmentSource);
+    webgl.compileShader(fragmentShader);
+
+    let program = webgl.createProgram();
+    webgl.attachShader(program,vartexShader);
+    webgl.attachShader(program,fragmentShader);
+    webgl.linkProgram(program);
+
+    //使用指定的shader代码片段
+    webgl.useProgram(program)
+
+    //准备绘制的相关参数 四角形的顶点与色值
+    let randomColor1 = randomColor();
+    let randomColor2 = randomColor();
+    let randomColor3 = randomColor();
+    let randomColor4 = randomColor();
+    let info=[
+        30,30,randomColor1.r,randomColor1.g,randomColor1.b,randomColor1.a,
+        30,300,randomColor2.r,randomColor2.g,randomColor2.b,randomColor2.a,
+        300,300,randomColor3.r,randomColor3.g,randomColor3.b,randomColor3.a,
+        300,30,randomColor4.r,randomColor4.g,randomColor4.b,randomColor4.a,
+    ]
+    //存储顶点索引的数组
+    var indices = [
+        0, 1, 2, //第一个三角形
+        0, 2, 3  //第二个三角形
+    ];
+
+    //得到设置的相关的参数
+    let a_Position = webgl.getAttribLocation(program,'a_Position')
+    let u_Screen_Size = webgl.getAttribLocation(program,'u_Screen_Size')
+    let a_Uv = webgl.getAttribLocation(program,'a_Uv')
+    //设置指定的相关的参数 设置当前的画布的宽高
+    webgl.vertexAttrib2f(u_Screen_Size,canvas.offsetWidth,canvas.offsetHeight);
+
+    let positionBuffer = webgl.createBuffer();
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,positionBuffer);
+    webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(info),webgl.STATIC_DRAW);
+
+    webgl.enableVertexAttribArray(a_Position);
+    webgl.vertexAttribPointer(a_Position,2,webgl.FLOAT,false,6*4,0);
+
+    webgl.enableVertexAttribArray(a_Uv);
+    webgl.vertexAttribPointer(a_Uv,4,webgl.FLOAT,false,6*4,2*4);
+
+    let elementBuffer = webgl.createBuffer();
+    webgl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER,elementBuffer);
+    webgl.bufferData(webgl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indices),webgl.STATIC_DRAW);
+
+    webgl.clearColor(0,0,0,1.0);
+    webgl.clear(webgl.COLOR_BUFFER_BIT);
+    //因为我们要绘制三个点，所以执行三次顶点绘制操作。
+    webgl.drawElements(webgl.TRIANGLES, 6, webgl.UNSIGNED_SHORT, 0);
+
+
+
+
+
+</script>
+
+</body>
+</html>

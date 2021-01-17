@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <a download="https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css" >下载测试</a>
+    <!-- // 下载，href指示目标地址，download重命名下载文件 -->
+    <a href="https://gw.alipayobjects.com/mdn/prod_resou/afts/img/A*OwZWQ68zSTMAAAAAAAAAAABkARQnAQ" download="w3logo">
+        <img src="https://gw.alipayobjects.com/mdn/prod_resou/afts/img/A*OwZWQ68zSTMAAAAAAAAAAABkARQnAQ" alt="W3School">
+    </a>
+</body>
+<script>
+    let downloadData =  `p{background:red}`;
+    // let downloadData =  `<p>我是来测试的哦<p>`;
+    // let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(downloadData));
+    let dataStr = "data:text/css;charset=utf-8," + encodeURIComponent(downloadData);
+    // let dataStr = "data:text/html,%3Ch1%3EHello%2C%20World!%3C%2Fh1%3E"
+    let downloadAnchorNode = document.createElement('a')
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "test.css")
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove(); 
+
+</script>
+</html>

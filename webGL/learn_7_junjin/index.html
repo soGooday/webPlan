@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+    /*#canvas{*/
+    /*    width: 512px;*/
+    /*    height: 512px;*/
+    /*}*/
+</style>
+<body>
+<canvas id="canvas"></canvas>
+<script  type="shader-source" id="vertexShader">
+    precision mediump float;
+    // 接收顶点坐标 (x, y)
+    attribute vec2 a_Position;
+    // 接收 canvas 尺寸(width, height)
+    attribute vec2 u_Screen_Size;
+    // 接收JavaScript传递过来的顶点 uv 坐标。
+    attribute vec2 a_Uv;
+    // 将接收的uv坐标传递给片元着色器
+    varying vec2 v_Uv;
+    void main(){
+        vec2 position = (a_Position / u_Screen_Size) * 2.0 - 1.0;
+        position = position * vec2(1.0,-1.0);
+        gl_Position = vec4(position, 0, 1);
+        // 将接收到的uv坐标传递给片元着色器
+        v_Uv = a_Uv;
+    }
+</script>
+<script  type="shader-source" id="fragmentShader">
+    precision mediump float;
+    // 接收顶点着色器传递过来的 uv 值。
+    varying vec2 v_Uv;
+    // 接收 JavaScript 传递过来的纹理
+    uniform sampler2D u_Texture;
+    void main(){
+        // 提取纹理对应uv坐标上的颜色，赋值给当前片元（像素）。
+        gl_FragColor = texture2D(u_Texture, vec2(v_Uv.x, v_Uv.y));
+    }
+</script>
+
+<script>
+    let canvas = document.getElementById('canvas');
+    resizeCanvas(canvas)
+    var webgl = canvas.getContext('webgl');
+    var positions = [
+        30, 30, 0, 0,    //V0
+        30, 300, 0, 1,   //V1
+        300, 300, 1, 1,  //V2
+        30, 30, 0, 0,    //V0
+        300, 300, 1, 1,  //V2
+        300, 30, 1, 0    //V3
+    ]
+
+    //取到相关素材 顶点着色器
+    let vartexshaderSource = document.getElementById('vertexShader').innerHTML;
+    let vertexShader = webgl.createShader(webgl.VERTEX_SHADER);
+    webgl.shaderSource(vertexShader,vartexshaderSource);
+    webgl.compileShader(vertexShader);
+
+
+    //片源卓着色器
+    let fragmentShaderSouerce = document.getElementById('fragmentShader').innerHTML;
+    let fargmentShader = webgl.createShader(webgl.FRAGMENT_SHADER);
+    webgl.shaderSource(fargmentShader,fragmentShaderSouerce);
+    webgl.compileShader(fargmentShader)
+
+ 
+
+
+    var program = webgl.createProgram();
+    webgl.attachShader(program,vertexShader);
+    webgl.attachShader(program,fargmentShader);
+    webgl.linkProgram(program);//创建编译了一个 一个我们可以使用shader了
+
+    //使用指定的shader代码片段
+    webgl.useProgram(program)
+    //需要之前设定的着色器的变量
+    let a_Position = webgl.getAttribLocation(program,'a_Position');
+    let u_Screen_Size = webgl.getAttribLocation(program,'u_Screen_Size');
+    let a_Uv = webgl.getAttribLocation(program,"a_Uv");
+    var u_Texture = webgl.getUniformLocation(program, "u_Texture");
+    //对着色器的相关参数进行赋值
+    webgl.vertexAttrib2f(u_Screen_Size,canvas.offsetWidth,canvas.offsetHeight);
+
+    var color = randomColor();
+    //使用指定的参数
+    webgl.enableVertexAttribArray(a_Position);
+    webgl.enableVertexAttribArray(a_Uv);
+    //创建缓冲区
+    var buffer = webgl.createBuffer();
+    //绑定缓冲区
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,buffer);
+    //往缓冲区绑定数据
+    webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(positions),webgl.STATIC_DRAW);
+    //设置a_Position的在缓冲区读取的数据的方式
+    webgl.vertexAttribPointer(a_Position,2,webgl.FLOAT,false,16,0);
+    //设置a_Uv的在缓冲区读取的数据的方式
+    webgl.vertexAttribPointer(a_Uv,2,webgl.FLOAT,false,16,8);
+
+    //设置清除屏幕的颜色为黑色
+    webgl.clearColor(1,1,1,1);
+
+    function render(){
+        webgl.clear(webgl.COLOR_BUFFER_BIT);
+        if(positions.length <= 0) return;
+        webgl.drawArrays(webgl.TRIANGLES,0,positions.length/4)
+    }
+    loadTexture(webgl, './image/w.jpg', u_Texture, function(){
+        render();
+    })
+
+    function loadTexture(webgl, src, attribute, callback) {
+        let img = new Image();
+        img.onload = function() {
+            webgl.activeTexture(webgl.TEXTURE0);
+            let texture = webgl.createTexture();
+            webgl.bindTexture(webgl.TEXTURE_2D, texture);
+            webgl.texImage2D(webgl.TEXTURE_2D, 0, webgl.RGBA, webgl.RGBA, webgl.UNSIGNED_BYTE, img);
+            webgl.texParameterf(webgl.TEXTURE_2D, webgl.TEXTURE_MAG_FILTER, webgl.LINEAR);
+            webgl.texParameterf(webgl.TEXTURE_2D, webgl.TEXTURE_MIN_FILTER, webgl.LINEAR);
+            webgl.uniform1i(attribute, 0);
+            callback && callback();
+        };
+        img.src = src;
+    }
+    function randomColor() {
+        var random = Math.random;
+        return {
+            r: random() * 255,
+            g: random() * 255,
+            b: random() * 255,
+            a: random() * 1
+        };
+    }
+    // setInterval(()=>{
+    //     positions=[
+    //         30, 30, 0, 0,    //V0
+    //         30, 300, 0, 1,   //V1
+    //         300, 300, 1, 1,  //V2
+    //         30, 30, 0, 0,    //V0
+    //         300, 300, 1, 1,  //V2
+    //         300, 30, 1, 0    //V3
+    //     ]
+    //     webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(positions),webgl.STATIC_DRAW);
+    //     loadTexture(webgl, './image/w.jpg', u_Texture, function(){
+    //         render();
+    //     })
+    //     // console.log(positions)
+    // },1000)
+
+    function resizeCanvas(canvas, width, height) {
+        if (canvas.width !== width) {
+            canvas.width = width ? width : window.innerWidth;
+        }
+        if (canvas.height !== height) {
+            canvas.height = height ? height : window.innerHeight;
+        }
+    }
+
+</script>
+</body>
+</html>

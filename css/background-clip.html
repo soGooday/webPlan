@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        div{
+            width: 143px;
+            height: 146px;
+            float: left;
+            margin: 10px;
+            
+            border: 10px  yellow dashed;
+        }
+        /**
+        * auto  将图片显示出来  以自己的大小往背景上贴，贴多少是多少
+        * contain  宽或者是高 为基准 显示出来 另一边不管
+        * cover 图片的比例与合资的比例一样 就是用这个
+        **/
+        .box1{
+            background: linear-gradient(#B2EBF2,#00BCD4)  no-repeat center;
+            -webkit-background-clip: text;
+            font-size: 50px;
+            color: transparent;
+        }
+        .box2{
+            background: url(./images/b-3.png)  no-repeat;
+            -webkit-background-clip: text;
+            font-size: 50px;
+            color: transparent;
+        }
+        .box3{
+            background: url(./images/b-3.png)  no-repeat;
+            background-origin: content-box;
+        }
+        .box4{
+            background: url(./images/b-3.png)  no-repeat;
+            /* background-clip: border-box; */
+            background-origin: border-box;
+        }
+        .box5{
+            background: url(./images/b-3.png)  no-repeat;
+            background-origin: padding-box;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box1">啊哈哈哈</div>
+    <div class="box2">啊哈哈哈</div>
+    <div class="box3"></div>
+    <div class="box4"></div>
+    <div class="box5"></div> 
+</body>
+</html>

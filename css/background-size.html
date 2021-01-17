@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        div{
+            width: 64px;
+            height: 76px;
+            float: left;
+            margin: 10px;
+        }
+        /**
+        * auto  将图片显示出来  以自己的大小往背景上贴，贴多少是多少
+        * contain  宽或者是高 为基准 显示出来 另一边不管
+        * cover 图片的比例与合资的比例一样 就是用这个
+        **/
+        .box1{
+            background: #000 url(./images/progress-bar-red-pack.png) no-repeat center;
+            background-size: auto;
+        }
+        .box2{
+            background: #000 url(./images/rule.png) no-repeat center;
+            background-size: contain;
+        }
+        .box3{
+            background: #000 url(./images/b-1.png) no-repeat center;
+            background-size: cover;
+        }
+        .box4{
+            background: #000 url(./images/b-2.png) no-repeat center;
+            background-size: auto; 
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box1"></div>
+    <div class="box2"></div>
+    <div class="box3"></div>
+    <div class="box4"></div>
+</body>
+</html>

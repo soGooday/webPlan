@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script type="shader-source" id="vertexShader">precision mediump float;
+        precision mediump float;
+        attribute vec2 a_Position;
+        attribute vec2 a_Seen_Size;
+        void main(){
+            vec2 position = (a_Position/a_Seen_Size) * 2.0 - 1.0;
+            position = position * vec2(1.0,-1.0);
+            gl_Position = vec4(position,0,1);
+        }
+    </script>
+<script type="shader-source" id="fragmentShader">
+        precision mediump float;
+        uniform vec4 u_Color;
+        void main(){
+            vec4 color = u_Color / vec4(255, 255, 255, 1);
+            //设置像素颜色为红色
+            gl_FragColor = color;
+        }
+    </script>
+<canvas id="canvas"></canvas>
+<script>
+    var canvas = document.getElementById('canvas');
+    var webgl = canvas.getContext('webgl');
+    //顶点shader
+    var vertexSource = document.getElementById('vertexShader').innerHTML;
+    var vertexShader = webgl.createShader(webgl.VERTEX_SHADER);
+    webgl.shaderSource(vertexShader,vertexSource);
+    webgl.compileShader(vertexShader)
+    //片元着色器
+    var fragmentSource = document.getElementById('fragmentShader').innerHTML;
+    var fargmentShader = webgl.createShader(webgl.FRAGMENT_SHADER);
+    webgl.shaderSource(fargmentShader,fragmentSource)
+    webgl.compileShader(fargmentShader)
+    //创建一个webgl能使用选择并使用的shder程序代码片段
+    var program = webgl.createProgram();
+    webgl.attachShader(program,vertexShader);
+    webgl.attachShader(program,fargmentShader);
+    webgl.linkProgram(program);//创建编译了一个 一个我们可以使用shader了
+
+    //使用指定的shader代码片段
+    webgl.useProgram(program)
+    //取到sharder中设置的变量
+    var a_Position = webgl.getAttribLocation(program,'a_Position');
+    var a_Seen_Size = webgl.getAttribLocation(program,'a_Seen_Size');
+    var u_Color = webgl.getUniformLocation(program, 'u_Color');
+    webgl.vertexAttrib2f(a_Seen_Size,canvas.offsetWidth,canvas.offsetHeight)
+    webgl.uniform4f(u_Color,randomColor().r,randomColor().b,randomColor().g,randomColor().a)
+    //确定坐标的位置
+    var positions = [1,0, 0,1, 0,0];
+    //创建buffer 在缓冲区设置相关代用参数
+    var buffer = webgl.createBuffer()
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,buffer);
+    webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array(positions),webgl.STATIC_DRAW);
+    //使用指定的变量
+    webgl.enableVertexAttribArray(a_Position);
+    //每次取两个数据
+    var size = 2;
+    //每个数据的类型是32位浮点型
+    var type = webgl.FLOAT;
+    //不需要归一化数据 就是将变量并未-[1,1]之间
+    var normalize = false;
+    // 每次迭代运行需要移动数据数 * 每个数据所占内存 到下一个数据开始点。
+    var stride = 0;
+    // 从缓冲起始位置开始读取
+    var offset = 0;
+    webgl.vertexAttribPointer(a_Position,size,type,normalize,stride,offset)
+
+    canvas.addEventListener("mouseup",e=>{
+        var x = e.pageX;
+        var y = e.pageY;
+        positions.push(x, y);
+        if (positions.length % 6 == 0) {
+            console.log(positions)
+            webgl.bufferData(webgl.ARRAY_BUFFER, new Float32Array(positions),webgl.STATIC_DRAW);
+            render()
+        }
+    })
+    function render(){
+        webgl.clearColor(0,0,0,1.0);
+        webgl.clear(webgl.COLOR_BUFFER_BIT);
+        webgl.drawArrays(webgl.TRIANGLES,0,positions.length / 2)
+    }
+
+    //设置一个画布清空画布的颜色useProgram
+    render()
+
+
+    function randomColor() {
+        return {
+            r:0.0,
+            b:1.0,
+            g:0.0,
+            a:0.0,
+        }
+    }
+</script>
+<svg width='200' height='100' style='border:1px solid red'>
+    <line x1="10" y1="10" x2="40" y2="40" style="stroke-width: 5px; stroke: black;"/>
+    <circle cx="10" cy="10" r="4" fill="red"></circle>
+    <circle cx="40" cy="40" r="4" fill="red"></circle>
+</svg>
+<svg width='200' height='100' style='border:1px solid red'>
+    <circle cx="10" cy="10" r="4" fill="red"></circle>
+    <circle cx="40" cy="40" r="4" fill="red"></circle>
+    <g transform="matrix(1,0,0,1,80,10)">
+        <line x1="10" y1="10" x2="40" y2="40" style="stroke-width: 5px; stroke: black;"/>
+
+    </g>
+</svg>
+
+</body>
+</html>

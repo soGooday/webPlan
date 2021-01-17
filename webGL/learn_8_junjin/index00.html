@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebGl 旋转（矩阵变换）</title>
+</head>
+<body>
+<canvas id="myCanvas" width="500" height="300" style="border: 1px solid red"></canvas>
+</body>
+<script>
+
+    window.onload = function () {
+
+        //第1步 - 准备Canvas和获取WebGL的渲染上下文
+        var canvas = document.getElementById('myCanvas'),
+            gl = canvas.getContext('webgl');
+
+        //第2步 - 定义几何并将其存储在缓冲区对象
+        var vertices = [
+                -0.5,0.5,0.0,
+                0.0,0.5,0.0,
+                -0.25,0.25,0.0,
+            ],
+            colors = [
+                0,0,1,
+                1,0,0,
+                0,1,0,],
+            indices =[0,1,2];
+
+        var vertex_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        var color_buffer = gl.createBuffer ();
+        gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+        var index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+        //第3步 - 创建和编译着色器程序
+        var vertCode =
+            'attribute vec3 coordinates;' +
+            'uniform mat4 rotate;'+
+            'attribute vec3 color;'+
+            'varying vec3 vColor;'+
+            'void main(void) {' +
+            ' gl_Position = rotate*vec4(coordinates,1.0);' +
+            'vColor = color;'+
+            '}';
+
+        var fragCode =
+            'precision mediump float;'+
+            'varying vec3 vColor;'+
+            'void main(void) {' +
+            ' gl_FragColor = vec4(vColor, 1);' +
+            '}';
+
+        var vertShader = gl.createShader(gl.VERTEX_SHADER);
+        var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(vertShader, vertCode);
+        gl.shaderSource(fragShader, fragCode);
+        gl.compileShader(vertShader);
+        gl.compileShader(fragShader);
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertShader);
+        gl.attachShader(shaderProgram, fragShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+
+        //第4步 - 关联着色器程序到缓冲区对象
+
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        var coord = gl.getAttribLocation(shaderProgram, 'coordinates');
+        gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(coord);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+        var color = gl.getAttribLocation(shaderProgram, "color");
+        gl.vertexAttribPointer(color, 3, gl.FLOAT, false,0,0) ; //color
+        gl.enableVertexAttribArray(color);
+
+        //绕着Z轴旋转
+        var init_angle = 0.0;//初始角度
+        var angle_step = 1;//旋转步伐
+        var current_angle = init_angle;
+        var radian = Math.PI * (current_angle % 360) / 180.0;
+        var cosB = Math.cos(radian);
+        var sinB = Math.sin(radian);
+        var xformMatrix = new Float32Array([
+            cosB,  sinB, 0.0, 0.0,
+            -sinB, cosB, 0.0, 0.0,
+            0.0,    0.0, 1.0, 0.0,
+            0.0,    0.0, 0.0, 1.0
+        ]);
+        var rotate = gl.getUniformLocation(shaderProgram, "rotate");
+        gl.uniformMatrix4fv(rotate, false, xformMatrix);
+
+        //第5步 - 绘制所需的对象
+        setInterval(function () {
+            radian = Math.PI * (current_angle % 360) / 180.0;
+            cosB = Math.cos(radian);
+            sinB = Math.sin(radian);
+            xformMatrix = new Float32Array([
+                cosB,  sinB, 0.0, 0.0,
+                -sinB, cosB, 0.0, 0.0,
+                0.0,    0.0, 1.0, 0.0,
+                0.0,    0.0, 0.0, 1.0
+            ]);
+            gl.uniformMatrix4fv(rotate, false, xformMatrix);
+
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+            gl.clearColor(0.5, 0.5, 0.5, 0.9);
+            gl.clearDepth(1.0);
+            gl.viewport(0.0, 0.0, canvas.width, canvas.height);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+
+            //当前角度
+            current_angle = current_angle + angle_step;
+
+        },10);
+
+
+
+
+
+    }
+
+</script>
+</html>

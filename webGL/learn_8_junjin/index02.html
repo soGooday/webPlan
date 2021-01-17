@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../Tool/tool.js"></script>
+    <script src="../Tool/matrix.js"></script>
+    <script src="../Tool/math.js"></script>
+</head>
+<body>
+<div>
+    环境光因子：
+    <input id="ambientFactor" class="range" type="range" min="0" max="1" step="0.01" value="0.2" />
+</div>
+<div>
+    光线颜色：
+    <input id="lightColor" class="color" type="color" value="#FFFFFF" />
+</div>
+<canvas id="canvas"></canvas>
+<script  type="shader-source" id="vertexShader">
+  //浮点数设置为中等精度
+        precision mediump float;
+        //接收 JavaScript 传递过来的点的坐标（X, Y, Z）
+        attribute vec3 a_Position;
+        // 接收顶点颜色
+        attribute vec4 a_Color;
+        varying vec4 v_Color;
+        uniform mat4 u_Matrix;
+
+        void main(){
+            gl_Position = u_Matrix * vec4(a_Position, 1);
+            // 将顶点颜色插值处理传递给片元着色器
+            v_Color = a_Color;
+        }
+</script>
+<script  type="shader-source" id="fragmentShader">
+         //设置浮点数精度为中等。
+        precision mediump float;
+        //接收 JavaScript 传过来的颜色值（rgba）。
+        varying vec4 v_Color;
+        //光源颜色
+        uniform vec3 u_LightColor;
+        //环境光强度因子
+        uniform float u_AmbientFactor;
+        void main(){
+          vec3 ambientColor  = u_LightColor * u_AmbientFactor
+          gl_FragColor = vec4(ambientColor,1) * v_Color;
+       }
+</script>
+
+
+<script>
+    //初始化webgl的相关参数var matrix = Matrix4;
+
+    let canvas = document.getElementById('canvas');
+    var webgl = canvas.getContext('webgl');
+
+    let vertexSource = document.getElementById('vertexShader').innerText;
+    let vartexShader = webgl.createShader(webgl.VERTEX_SHADER);
+    webgl.shaderSource(vartexShader,vertexSource);
+    webgl.compileShader(vartexShader);
+
+    let fragmentSource = document.getElementById('fragmentShader').innerText;
+    let fragmentShader = webgl.createShader(webgl.FRAGMENT_SHADER);
+    webgl.shaderSource(fragmentShader,fragmentSource);
+    webgl.compileShader(fragmentShader);
+
+    let program = webgl.createProgram();
+    webgl.attachShader(program,vartexShader);
+    webgl.attachShader(program,fragmentShader);
+    webgl.linkProgram(program);
+
+    //使用指定的shader代码片段
+    webgl.useProgram(program)
+
+    let  allInfo  =createCube(1, 1, 1)
+    //准备绘制的相关参数 四角形的顶点与色值
+    let info=allInfo.positions
+    let indices = allInfo.indices;
+    let colors = allInfo.colors;
+
+    //得到设置的相关的参数
+    let a_Position = webgl.getAttribLocation(program,'a_Position');
+    let u_Matrix = webgl.getUniformLocation(program,'u_Matrix');
+    let a_Color = webgl.getAttribLocation(program,'a_Color');
+    let u_AmbientFactor = webgl.getUniformLocation(program,'u_AmbientFactor');
+    let u_LightColor = webgl.getUniformLocation(program,'u_LightColor');
+    webgl.uniform3f(u_LightColor, 1, 1, 1);
+    webgl.uniform1f(u_AmbientFactor, 0.5);
+    //设置指定的相关的参数 设置当前的画布的宽高
+    // webgl.vertexAttrib2f(u_Screen_Size,canvas.offsetWidth,canvas.offsetHeight);
+    // 坐标定点的坐标buffer 及其数据
+    let positionBuffer = webgl.createBuffer();
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,positionBuffer);
+    webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(info),webgl.STATIC_DRAW);
+    // //设置数值
+    webgl.enableVertexAttribArray(a_Position);
+    webgl.vertexAttribPointer(a_Position,3,webgl.FLOAT,false,0,0);
+    // 设置颜色的buffer 及其数据
+    let colorsBuffer = webgl.createBuffer();
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,colorsBuffer);
+    webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(colors),webgl.STATIC_DRAW);
+    //设置数值
+    webgl.enableVertexAttribArray(a_Color);
+    webgl.vertexAttribPointer(a_Color,4,webgl.FLOAT,false,0,0);
+
+
+
+
+    let elementBuffer = webgl.createBuffer();
+    webgl.bindBuffer(webgl.ELEMENT_ARRAY_BUFFER,elementBuffer);
+    webgl.bufferData(webgl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indices),webgl.STATIC_DRAW);
+
+    function render(){
+        webgl.clearColor(0,0,0,1.0);
+        webgl.clear(webgl.COLOR_BUFFER_BIT);
+        //隐藏背面
+        webgl.enable(webgl.CULL_FACE);
+        //因为我们要绘制三个点，所以执行三次顶点绘制操作。
+        webgl.drawElements(webgl.TRIANGLES, indices.length, webgl.UNSIGNED_SHORT, 0);
+    }
+
+    let aspect = canvas.width/canvas.height;
+    let projectionMatrix = matrix.ortho(-aspect*4,aspect*4,4,-4,100,-100);
+    //角度转弧度
+    var deg2radians = window.lib3d.math.deg2radians;
+    let onePI = Math.PI/180;
+    var xAngle = 0;
+    var tmpMatrix = matrix.identity();//X轴旋转的矩阵
+    let dstMatrix = matrix.identity();//最后的处理后的矩阵
+
+    let zMatrix = matrix.identity();//最后的处理后的矩阵
+
+    let ambientFactor = document.getElementById('ambientFactor')
+    setInterval(()=>{
+        xAngle+=1;
+        matrix.rotationX(onePI*(xAngle), tmpMatrix);
+        matrix.rotationY(onePI*(xAngle), dstMatrix);
+        //再绕 Z 轴旋转矩阵。
+        matrix.rotationX(onePI*(xAngle), zMatrix);
+        //将绕着X轴与Y轴的转动得到最终的旋转矩阵
+        matrix.multiply(dstMatrix, tmpMatrix, dstMatrix);
+        //将绕着X轴与Y轴的转动得到最终的旋转矩阵与z轴的相连接
+        matrix.multiply(dstMatrix, zMatrix, dstMatrix);
+        //模型型矩阵  算出当前的最新的族战
+        matrix.multiply(tmpMatrix,dstMatrix,dstMatrix);
+        //模型型矩阵  算出当前的最终矩阵
+        matrix.multiply(projectionMatrix,dstMatrix,dstMatrix);
+        webgl.uniformMatrix4fv(u_Matrix,false,dstMatrix)
+        webgl.uniform1f(u_AmbientFactor,false,ambientFactor.value)
+        render()
+        // console.log(ambientFactor.value)
+    },10)
+
+
+    // //生成单位矩阵
+    // var initMatrix = matrix.identity();
+    // var currentMatrix = null;
+    // var xAngle = 0;
+    // var yAngle = 0;
+    // var deg = Math.PI / 180;
+    // var timer = null
+    // function animate(e) {
+    //     console.log('11')
+    //     if (timer) {
+    //         clearInterval(timer);
+    //         timer = null;
+    //     } else {
+    //         timer = setInterval(() => {
+    //             xAngle += 1;
+    //             yAngle += 1;
+    //             console.log('1')
+    //             currentMatrix = matrix.rotationX(deg * xAngle);
+    //             currentMatrix = matrix.rotateY(currentMatrix, deg * yAngle);
+    //             webgl.uniformMatrix4fv(u_Matrix, false, currentMatrix);
+    //             render(webgl);
+    //         }, 50);
+    //     }
+    // }
+    // animate();
+
+
+</script>
+
+</body>
+</html>

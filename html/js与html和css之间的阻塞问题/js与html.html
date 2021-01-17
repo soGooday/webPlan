@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script  defer src="js/bar.js"></script>
+    <script   src="js/foo.js"></script>
+    <script   src="js/ress.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("dom content loaded");
+        })
+        window.onload = function () {
+            console.log('resources loaded');
+        }
+    </script>
+</head>
+
+<body>
+    <div id="dd">
+        div 1
+    </div>
+    <p>paragraph</p>
+
+    <div>
+        div 2
+    </div>
+</body>
+</html>
