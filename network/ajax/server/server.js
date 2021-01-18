@@ -9,10 +9,25 @@ app.get('',(request,response)=>{
     response.send('学习 ajax get')
 })
 // ajax post
-app.post('',(request,response)=>{
-    response.setHeader('Access-Control-Allow-Origin',"*")
-    console.log(response)
-    response.send('学习 ajax post')
+app.post('/abort',(request,response)=>{
+    response.setHeader('Access-Control-Allow-Origin',"*") 
+    setTimeout(()=>{
+      response.send('学习 ajax abort')
+    },3000)
+})
+//取消ajax的发送
+app.get('/timeout',(request,response)=>{
+  response.setHeader('Access-Control-Allow-Origin',"*") 
+  setTimeout(()=>{
+    response.send('学习 ajax timeout')
+  },3000) 
+})
+//ie的发送
+app.get('/ie',(request,response)=>{
+  response.setHeader('Access-Control-Allow-Origin',"*") 
+ 
+  response.send('学习 ajax ie缓存处理')
+  
 })
 let point = 8080;
 var server = app.listen(point,(arg)=>{  
