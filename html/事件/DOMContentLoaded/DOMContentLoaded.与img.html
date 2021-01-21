@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- https://mp.weixin.qq.com/s/brIUk8kgiSItG9DWECu2ew -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.2/vue.esm-browser.js"></script></body>
+
+    <script> 
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            console.log('DOMContentLoaded触发')
+        })
+      
+        window.onload = function(){ 
+            console.log('load触发')
+        }
+
+    </script>
+    <style>
+        img{
+            width: 100px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    请将浏览器的netWork模块
+    <img src="https://dev-test-space.oss-cn-hangzhou.aliyuncs.com/dist01/IATest/private/G/G024/images/nd_bg1.png" alt="">
+    中的网速改为 slow 3G 
+    可以帮助我们更好观察 js  与 DOM之间加载的关系
+
+
+</html>
