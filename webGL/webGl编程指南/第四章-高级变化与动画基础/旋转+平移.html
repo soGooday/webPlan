@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #canvas{
+            border: 1px turquoise solid;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+    let canvas = document.getElementById('canvas');
+    let wh = 500;
+    canvas.style.width = wh + "px"
+    canvas.style.height =  wh + "px"
+    let gl = canvas.getContext('webgl');
+    let dpr = window.devicePixelRatio;
+    canvas.width = wh*dpr;
+    canvas.height = wh*dpr;
+
+    let frgment = `
+    ``
+    
+    
+    `
+
+
+
+</script>
+    
+</body>
+</html>
