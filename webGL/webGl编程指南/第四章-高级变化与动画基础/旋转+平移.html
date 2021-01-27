@@ -23,11 +23,25 @@
     canvas.width = wh*dpr;
     canvas.height = wh*dpr;
 
-    let frgment = `
-    ``
-    
-    
+
+
+    let vertex_shader =`
+    precision mediump float;
+    attribute vec4 a_Positon;
+    void main(){
+        gl_Postion = a_Positon;
+    }  
     `
+    let fargment_shader = `
+    precision mediump float;
+    void main(){
+        vec4 color = u_Color / vec4(255, 255, 255, 1);
+        //设置像素颜色为红色
+        gl_FragColor = color; 
+    }
+    `
+
+    let vertexShader = gl.createShader(gl.VERTEX_SHADER)
 
 
 
