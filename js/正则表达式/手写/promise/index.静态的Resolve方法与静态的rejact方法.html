@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./js/PM4.js"></script>
+</head>
+<body>
+
+
+    <script>
+
+    //     let p = new PM((resolve,reject)=>{
+    //         resolve('成功了')
+    //     })
+    //    PM.resolve(p).then(res=>{
+    //        console.log(res)
+    //    },rej=>{
+    //     console.log(rej)
+    //    })
+       PM.reject('失败了').then(null,(value)=>{
+           console.log(value)
+       })
+
+
+    </script> 
+</body>
+</html>
