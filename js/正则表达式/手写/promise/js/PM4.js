@@ -101,6 +101,11 @@ class PM {
             rej(value)
         })
     }
+    catch(value){
+        return new PM((res,rej)=>{
+            rej(value)
+        })
+    }
 
 
 }
