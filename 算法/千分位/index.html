@@ -1,42 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-
-    
-
-
-<script>
-    let num = 1234.5467
-    function getNum(num){ 
-        let list = [],q,h;
-        for (let index = 0; index < num.length; index++) {
-            const element = num[index];
-            list[index] = element; 
+    <script>
+        let num = 1234.01
+        //小数点之后的
+        function getNumX0(num){
+            if(!num) return '';
+            let numString = num + '';
+            // console.log('numString',numString.match(/(\w){1,3}/g))
+            return numString.match(/(\w){1,3}/g).join(',');//将3个数 3个大数就分割一下
         }
-        console.log(list)
-        for (let index = 0; index < list.length; index++) { 
-            q = list[index]
-            h = list[list.length - index - 1]
-            list[index] = h;
-            list[list.length - index - 1] = q
+        //大于0的
+        function getNumD0(num) {
+            num = num + "";
+            let fNum = 3;
+            let num4 = num.length % fNum;//差几位是3的倍数
+            //使用0 进行部位 位3的倍数
+            for (let index = 0; index < fNum-num4; index++) {
+                num = '0' + num;
+            }
+            console.log('num:',num,num4)
+            //然后3个一位分开
+            let num5 = num.match(/(\d){1,3}/g);
+            //将字符串前面0 去掉
+            return num5.join(',').replace(/^(0)*/,()=>{
+                return '';
+            })
         }
-        console.log(list)
-        return list.join('') 
+        num = (num + "").split('.')
+        let d0 = getNumD0(num[0]);
+        let x0 = getNumX0(num[1] || '') 
+        console.log('大0的部分:',d0)
+        console.log('小于0的部分:',x0)
+        console.log('最终合成的部分:',`${d0}.${x0}`)
+        
 
-    }
-    num = (num+"").split('.')
-    let num2  = getNum(num[0]);
-    // console.log(num2.match(/(\w){1,3}/g))
+    </script>
 
-    // console.log(getNum(num[0]))
 
-</script>
-
-    
 </body>
+
 </html>
