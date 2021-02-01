@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    
+
+
+<script>
+    let num = 1234.5467
+    function getNum(num){ 
+        let list = [],q,h;
+        for (let index = 0; index < num.length; index++) {
+            const element = num[index];
+            list[index] = element; 
+        }
+        console.log(list)
+        for (let index = 0; index < list.length; index++) { 
+            q = list[index]
+            h = list[list.length - index - 1]
+            list[index] = h;
+            list[list.length - index - 1] = q
+        }
+        console.log(list)
+        return list.join('') 
+
+    }
+    num = (num+"").split('.')
+    let num2  = getNum(num[0]);
+    // console.log(num2.match(/(\w){1,3}/g))
+
+    // console.log(getNum(num[0]))
+
+</script>
+
+    
+</body>
+</html>
