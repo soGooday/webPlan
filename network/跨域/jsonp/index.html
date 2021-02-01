@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+
+    <script>
+
+        function jsonp(data){
+            let jsonpNum = 0;
+            let jsonpString = 'jsopnCallBack';//或者是其他的什么
+            let setTimeOutNum = 4000;
+            return new Promise((resolve,reject)=>{
+                //假定 query传入的是 key=1&key2=2
+                let {url,query} = data;
+
+                let script = document.createElement('script');
+                script.src = `${url}?${query}&jsopnCallBack=${jsopnCallBackName()}`;
+                script.async = 'async';
+
+                //渠道一个为位移函数名称
+                function jsopnCallBackName(){ 
+                    let funName = getFunID();
+                    while(window.funName){ 
+                        funName = getFunID();
+                    }  
+                    watchJsonPCallBack(funName);//全局注册
+                    return funName;//目的是为了唯一函数名
+                } 
+                //挂在监听事件
+                function watchJsonPCallBack(funName){ 
+                    let timer = null;
+                     window[funName] = function(result){ 
+                        if(timer) clearTimeout(timer)
+                        resolve(result)
+                     } 
+                     timer = setTimeout(()=>{
+                        reject()
+                     },setTimeOutNum)
+                     
+                }
+                function getFunID(){
+                    jsonpNum++;
+                    let funName = `${jsonpString}${jsonpNum}`;
+                    return funName;
+                }
+                document.body.appendChild(script)
+
+            })
+        }
+
+ 
+
+
+
+
+    </script>
+    
+</body>
+</html>

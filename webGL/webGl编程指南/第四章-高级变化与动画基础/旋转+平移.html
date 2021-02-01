@@ -12,6 +12,21 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<script type="shader-source" id="vertexShader">precision mediump float;
+        precision mediump float;
+        attribute vec2 a_Position;
+        void main(){
+            gl_Position = vec4(a_Position,0,1);
+        }
+    </script>
+<script type="shader-source" id="fragmentShader">
+        precision mediump float;
+        void main(){
+            vec4 color = vec4(255, 255, 255, 1);
+            //设置像素颜色为红色
+            gl_FragColor = color;
+        }
+    </script>
 
 <script>
     let canvas = document.getElementById('canvas');
@@ -23,25 +38,43 @@
     canvas.width = wh*dpr;
     canvas.height = wh*dpr;
 
+    var vertexSource = document.getElementById('vertexShader').innerHTML;
+    let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader,vertexSource);
+    gl.compileShader(vertexShader);
+
+    var fragmentSource = document.getElementById('fragmentShader').innerHTML;
+    let fargmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fargmentShader,fragmentSource);
+    gl.compileShader(fargmentShader);
 
 
-    let vertex_shader =`
-    precision mediump float;
-    attribute vec4 a_Positon;
-    void main(){
-        gl_Postion = a_Positon;
-    }  
-    `
-    let fargment_shader = `
-    precision mediump float;
-    void main(){
-        vec4 color = u_Color / vec4(255, 255, 255, 1);
-        //设置像素颜色为红色
-        gl_FragColor = color; 
-    }
-    `
+    var program = gl.createProgram();
+    gl.attachShader(program,vertexShader);
+    gl.attachShader(program,fargmentShader);
+    gl.linkProgram(program);//创建编译了一个 一个我们可以使用shader了
+    //
+    // //使用指定的shader代码片段
+    gl.useProgram(program)
 
-    let vertexShader = gl.createShader(gl.VERTEX_SHADER)
+    let a_Position = gl.getAttribLocation(program,'a_Positon');
+    var positions = [1,0, 0,1, 0,0];
+    let buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions),gl.STATIC_DRAW);
+    //使用指定的变量
+    gl.enableVertexAttribArray(a_Position)
+    //每次取两个数据
+    var size = 2;
+    //每个数据的类型是32位浮点型
+    var type = gl.FLOAT;
+    //不需要归一化数据 就是将变量并未-[1,1]之间
+    var normalize = false;
+    // 每次迭代运行需要移动数据数 * 每个数据所占内存 到下一个数据开始点。
+    var stride = 0;
+    // 从缓冲起始位置开始读取
+    var offset = 0;
+    gl.vertexAttribPointer(a_Position,size,type,normalize,stride,offset)
 
 
 

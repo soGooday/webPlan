@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./js/PM2.js"></script>
+</head>
+<body>
+
+
+    <script>
+
+        let a = new PM(function(resolve,reject){
+            // console.log(a)  
+            // resolve('成功');
+            // reject('失败')
+            // console.log('aaa')
+            setTimeout(()=>{
+                resolve('失败');
+                console.log('aaa')
+            },1000)
+           
+        })
+        .then((resolve)=>{ 
+            // throw new Error('出错 捕获')
+            // console.log(resolve)
+            return new PM((resolve,reject)=>{
+                resolve('返回测试')
+            })
+        },(reject)=>{ 
+            return new PM((resolve,reject)=>{
+                resolve('返回测试-失败')
+            })
+        }) 
+        .then((resolve)=>{ 
+            console.log("resolve",resolve)
+        },(reject)=>{ 
+            console.log('reject',reject)
+        })
+        console.log('-------------------------')
+
+
+
+        new Promise((resolve,reject)=>{
+          // console.log(a)  
+            // resolve('成功');
+            // reject('失败')
+            // console.log('aaa')
+            setTimeout(()=>{
+                resolve('失败');
+                console.log('aaa')
+            },1000)
+           
+        })
+        .then((resolve)=>{  
+            return new PM((resolve,reject)=>{
+                resolve('返回测试')
+            })
+        },(reject)=>{ 
+            return new PM((resolve,reject)=>{
+                resolve('返回测试-失败')
+            })
+        }) 
+        .then((resolve)=>{ 
+            console.log("resolve",resolve)
+        },(reject)=>{ 
+            console.log('reject',reject)
+        })
+
+    </script> 
+</body>
+</html>
