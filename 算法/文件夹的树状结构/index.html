@@ -7,7 +7,9 @@
 </head>
 <body>
  <script>
-//整体思路 将类表中的父级进行排序，然后倒叙插入相应的父节点中
+//方法一
+//整体思路 将类表中的父级进行排序，然后倒叙插入相应的父节点中。
+console.time()
 let map = new Map();
 const list = [
   { id: 1001, parentId: 0, name: 'AA' },
@@ -24,6 +26,7 @@ const list = [
 let parentIdList = list.sort((a,b)=>{ 
   return a.parentId - b.parentId; 
 });
+//使用数组map进行数据收集
 for (let index = 0; index < list.length; index++) {
   const element = list[index];
   map.set(element.id,element); 
@@ -51,31 +54,60 @@ function setparentIdListChild(element){
       map.delete(id);//然后移除已经被找到父级的map数据
   }  
 }
-
-// function hd(list,c){ 
-//   c++; 
-//   if(list.children){
-//     hd(list.children,c)
-//   }else{
-//     console.log(list)
-//     list.index = c 
-//     return list
-//     // return list.index;
-//   }
-
-// }
-// for (const iterator of map.entries()) {
-//   hd(iterator[1],1)
-//   // console.log('iterator:',iterator)
-// }
+//  console.log('map:',map)
+console.timeEnd()
 
 
-
- 
-console.log('map:',map)
-
-
-
+//方法一
+console.time() 
+// function getJsonTree(data, parentId) {
+//             var result = [], temp;
+//             for (var i = 0; i < data.length; i++) {
+//                 if (data[i].parentId == parentId) {
+//                   console.log('i',parentId,data[i])
+//                     var obj = {"name": data[i].name,"id": data[i].id};
+//                     temp = this.getJsonTree(data, data[i].id);
+//                     if (temp.length > 0) {
+//                         obj.children = temp;
+//                     }
+//                     result.push(obj);
+//                 }
+//             }
+//             return result;
+//         }
+//         console.log(list)
+//        console.log(this.getJsonTree(list,'')) 
+        //递归方法 生成 json tree 数据
+      function  getJsonTree(data, pid) {
+            var result = [], temp;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].pid == pid) {
+                    var obj = {"title": data[i].title,"id": data[i].id};
+                    temp = this.getJsonTree(data, data[i].id);
+                    console.log("temp:",data,temp)
+                    if (temp.length > 0) {
+                        obj.children = temp;
+                    }
+                    result.push(obj);
+                }
+            }
+            return result;
+        }
+        let treeList = [
+            {"id":1,"title":"语文","pid":0},
+            {"id":2,"title":"数学","pid":0},
+            {"id":3,"title":"英语","pid":0},
+            {"id":4,"title":"阅读","pid":1},
+            {"id":5,"title":"作文","pid":1},
+            {"id":6,"title":"算数","pid":2},
+            {"id":7,"title":"应用","pid":2},
+            {"id":8,"title":"单词","pid":3},
+            {"id":9,"title":"语句","pid":3},
+            {"id":10,"title":"为什么","pid":4},
+        ]
+      
+      console.log(this.getJsonTree(treeList,''))
+    console.timeEnd()
  </script>
 </body>
 </html>
