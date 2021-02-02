@@ -7,8 +7,8 @@
 </head>
 <body>
  <script>
-
-
+//整体思路 将类表中的父级进行排序，然后倒叙插入相应的父节点中
+let map = new Map();
 const list = [
   { id: 1001, parentId: 0, name: 'AA' },
   { id: 1002, parentId: 1001, name: 'BB' },
@@ -20,6 +20,61 @@ const list = [
   { id: 1008, parentId: 1004, name: 'HH' },
   { id: 1009, parentId: 1005, name: 'II' },
 ];
+//将父的id排序 将所有的子集合在一起
+let parentIdList = list.sort((a,b)=>{ 
+  return a.parentId - b.parentId; 
+});
+for (let index = 0; index < list.length; index++) {
+  const element = list[index];
+  map.set(element.id,element); 
+}
+//将每一子层级找到对应的父级
+for (let index = parentIdList.length-1; index >= 0; index--) {
+  const element = parentIdList[index];
+  // console.log(element) 
+  this.setparentIdListChild(element) 
+}
+//将每一子层级找到对应的父级
+function setparentIdListChild(element){
+  let {id ,parentId} = element;
+  let parentIdList = map.has(parentId) ?  map.get(parentId) : '';
+  if(parentIdList){
+      if(parentIdList.children){ 
+        parentIdList.children.push(element); 
+        parentIdList.children = parentIdList.children.sort((a,b)=>{//将子物体的顺序进行排序 确保统一等级中的先后顺序
+          return a.id - b.id;
+        })
+      }else{ 
+        parentIdList.children =[];
+        parentIdList.children.push(element);
+      } 
+      map.delete(id);//然后移除已经被找到父级的map数据
+  }  
+}
+
+// function hd(list,c){ 
+//   c++; 
+//   if(list.children){
+//     hd(list.children,c)
+//   }else{
+//     console.log(list)
+//     list.index = c 
+//     return list
+//     // return list.index;
+//   }
+
+// }
+// for (const iterator of map.entries()) {
+//   hd(iterator[1],1)
+//   // console.log('iterator:',iterator)
+// }
+
+
+
+ 
+console.log('map:',map)
+
+
 
  </script>
 </body>
