@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="./js/Vue.js"></script>
+    <script src="./js/Compile.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div>name:{{name}}</div>
+        <span>age:{{age}}</span>
+        <div>
+            <div @click="hander">shool:{{shool}}</div>
+            <div>calss:{{calss}}</div>
+        </div>
+        <input type="text" v-model="name"  value="1111" placeholder="请输入value"/>
+        <button @click="changeName">呵呵</button>
+        <div v-text="age"></div>
+        <div v-html="html"></div>
+    </div>
+
+<script>
+
+    const VM =new Vue({
+        el:'#app',
+
+        data:{
+            age:18,
+            name:'hahaha',
+            shool:"万里",
+            calss:'135',
+            foot:{
+                bar:"1"
+            },
+            html:'<span>我是前来测试v-html使用的</span>'
+        },
+        created(){
+            setTimeout(()=>{
+                this.shool = '快到碗里来'
+            },2000)
+        },
+        methods:{
+            hander(num){
+               this.name = 'guaguagua';
+            },
+            changeName(){
+                this.name = '哇哈哈啊哈';
+            }
+        },
+    })
+    VM.$data.name = 'wawa';
+    VM.$data.foot.bar = 'wawa';
+
+</script>
+</body>
+</html>
