@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../js/react.development.js"></script>
+    <script src="../js/react-dom.development.js"></script>
+    <script src="../js/babel.min.js"></script>
+    <script src="../js//prop-types.js"></script>
+</head>
+<body>
+    <div id="test"></div>
+    <script type="text/babel">
+    
+    class MyComp extends React.Component{ 
+   
+      
+        showWaring(){
+            // const {input} = this.refs;
+            alert('输入:',this)
+        }
+
+        showWaring2(){
+            alert('输入:',this)
+            const {input2} = this.refs;
+            alert('失去焦点')
+        }
+        render(){
+            const {name,height,age,sex} = this.props;
+            return (<div> 
+                <input ref="input"  type="text" placeholder='请输入测试' />
+                <button onClick={this.showWaring}>确定</button>
+                <input ref="input2" onBlur={this.showWaring2} placeholder="失去焦点测试" type="text" />
+            </div>)
+        }
+      
+    }
+    const props = {name:'啊哈哈',height:180,age:18}
+    
+    ReactDOM.render(<MyComp {...props} />,document.getElementById('test'))
+    </script>
+</body>
+</html>

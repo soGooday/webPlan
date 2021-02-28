@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../../js/react.development.js"></script>
+    <script src="../../js/react-dom.development.js"></script>
+    <script src="../../js/babel.min.js"></script>
+    <script src="../../js//prop-types.js"></script>
+</head>
+
+<body>
+    <div id="test"></div>
+    <script type="text/babel">
+        class MyComp extends React.Component {
+
+            //受控组件  讲数据维护到state中
+            state={
+                userName:'',
+                passWord:'',
+            }
+
+            saveUserName = (event)=>{ 
+                // this.state.userName = event.target.value
+                this.setState({userName : event.target.value})
+            }
+            savePassWord = (event)=>{
+                this.setState({passWord : event.target.value})
+                // this.state.passWord = event.target.value
+            }
+            onSubmit = event =>{
+                event.preventDefault();
+                const {userName,passWord} = this.state
+                alert(`账号：${userName},密码：${passWord}`);
+                
+            }
+            render() {
+                return (<div>
+                    <form onSubmit={this.onSubmit}>
+                        <input onChange={this.saveUserName}  type="text" />
+                        <input onChange={this.savePassWord}  type="text" />
+                        <button>登入</button>
+                    </form>
+                </div>)
+            }
+        }
+        const props = { name: '啊哈哈', height: 180, age: 18 }
+        ReactDOM.render(<MyComp {...props} />, document.getElementById('test'))
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../../js/react.development.js"></script>
+    <script src="../../js/react-dom.development.js"></script>
+    <script src="../../js/babel.min.js"></script>
+    <script src="../../js//prop-types.js"></script>
+</head>
+
+<body>
+    <div id="test"></div>
+    <script type="text/babel">
+        class MyComp extends React.Component {
+
+            //input这种输入框是 非受控组件   现用现取
+            ref1 = React.createRef();
+            ref2 = React.createRef();
+
+            onSubmit = (event)=>{
+                event.preventDefault();
+                const {ref1,ref2} = this; 
+                alert(`账号：${ref1.current.value},密码：${ref2.current.value}`);
+            }
+
+            render() {
+                return (<div>
+                    <form onSubmit={this.onSubmit}>
+                        <input ref={this.ref1}  type="text" />
+                        <input ref={this.ref2}  type="text" />
+                        <button>登入</button>
+                    </form>
+                </div>)
+            }
+        }
+        const props = { name: '啊哈哈', height: 180, age: 18 }
+        ReactDOM.render(<MyComp {...props} />, document.getElementById('test'))
+    </script>
+</body>
+
+</html>
