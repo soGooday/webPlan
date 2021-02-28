@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../js/react.development.js"></script>
+    <script src="../js/react-dom.development.js"></script>
+    <script src="../js/babel.min.js"></script>
+    <script src="../js//prop-types.js"></script>
+</head>
+<body>
+    <div id="test"></div>
+    <script type="text/babel">
+    
+    class MyComp extends React.Component{ 
+        // constructor(props){
+        //     super(props)
+        //     console.log(props,this.props)
+        // }
+        state = {num:1}; 
+        static propTypes={
+            name:PropTypes.string.isRequired,
+            height:PropTypes.number,
+        }
+        static defaultProps={
+            sex:'男生'
+        }
+
+        render(){
+            const {name,height,age,sex} = this.props;
+            return (<div>
+                <ul>
+                    <h3 onClick={this.add}>点击我</h3>
+                    <li>name{name}</li>
+                    <li>height{height}</li>
+                    <li>age{age}</li> 
+                    <li>sex{sex}</li>
+                    <li>num{this.state.num}</li>
+                </ul>
+            </div>)
+        }
+        add = ()=>{
+            console.log(this.state)
+            let {num} = this.state;
+            ++num; 
+            this.setState({num:num});
+        }
+    }
+    const props = {name:'啊哈哈',height:180,age:18}
+    
+    ReactDOM.render(<MyComp {...props} />,document.getElementById('test'))
+    </script>
+</body>
+</html>
