@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../../js/react.development.js"></script>
+    <script src="../../js/react-dom.development.js"></script>
+    <script src="../../js/babel.min.js"></script>
+    <script src="../../js//prop-types.js"></script>
+</head>
+
+<body>
+    <div id="test"></div>
+    <script type="text/babel">
+        class Count extends React.Component {
+            constructor(props){
+                console.log('Count---constructor')
+                super(props);
+                this.state = {count:0}
+
+            }
+            add = () =>{
+                const {count} = this.state;
+                this.setState({count:count+1})
+            }
+            //组件挂载
+            componentWillMount(){
+                console.log('Count---componentWillMount')
+            }
+            //组件卸载 componentWillUnmount
+            componentDidMount(){
+                console.log('Count---componentDidMount')
+            }
+            
+            render() {
+                console.log('Count---render')
+                const {count} = this.state;
+                return (<div>
+                    <p>当前数值：{count}</p>
+                    <button onClick={this.add}>增加</button>
+                </div>)
+            }
+        }
+        const props = { name: '啊哈哈', height: 180, age: 18 }
+        ReactDOM.render(<Count {...props} />, document.getElementById('test'))
+    </script>
+</body>
+
+</html>
