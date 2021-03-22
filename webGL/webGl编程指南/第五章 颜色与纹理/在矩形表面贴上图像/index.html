@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,8 +15,9 @@
 </head>
 
 <body>
-    <input type="file" accept="image/*" onchange="loadFile(event)">
-
+    !!!!!需要指出的是要选择当前文件夹下的sky.jpg!!!!!!
+    <!-- <input type="file" accept="image/*" onchange="loadFile(event)"> -->
+    <input type="file" onchange="loadFile(event)">
     <canvas id="canvas"></canvas>
     <script>
         // let imgSrc = 'https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=3740843900,2506868884&fm=15&gp=0.jpg.'
@@ -50,13 +50,14 @@
         let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, fragmentSource)
         gl.compileShader(fragmentShader)
-        if(!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-                alert(gl.getShaderInfoLog(fragmentShader));
-            }
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(fragmentShader));
+        }
         let program = gl.createProgram();
         gl.attachShader(program, vertextShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program)
+        gl.useProgram(program);
 
 
         //变量的处理
@@ -83,52 +84,29 @@
         gl.bufferData(gl.ARRAY_BUFFER, vertexTexCoords, gl.STATIC_DRAW);
         gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, f32Seize * 4, f32Seize * 2);
         gl.enableVertexAttribArray(a_TexCoord);
-
-        //获取图片的素材
-        // getImage();
-        // function getImage() {
-        //     let img = new Image();
-        //     let texture = gl.createTexture();
-        //     img.onload = function () {
-        //         console.log('图片加载完毕')
-        //         showImage(texture,img)
-        //     }
-        //     var file = new FileReader();
-        //     file.onload = function (e) {
-        //         console.log(e)
-        //     }
-        //     console.log('onload')
-        //     img.src = '0.jpg'
-        // }
-        const loadFile = function (event) {
-            let img = new Image();
-            let texture = gl.createTexture();
-            const reader = new FileReader();
-            reader.onload = function (e) {
-               
-                // const output = document.querySelector('#output');
-                // output.src = reader.result;//这个reader.result即使base64
-             
-                console.log('加载完毕')
-               
+        gl.clearColor(0, 0, 0, 1.0);
+        //获取图片的素材 
+        const loadFile = (event) => {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                // 文件里的文本会在这里被打印出来 
+                let img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let texture = gl.createTexture(); 
+                    showImage(texture,img)
+                }
             };
-            reader.onloadstart = function(e){
-                console.log('当前开始加载数据:',e)
-            }
-            console.log('当前的数据',reader)
-           
-        //    let dataUrlsImage = reader.readAsDataURL(event.target.files[0]);
-        //     console.log(new Blob(dataUrlsImage));
-        //     img.onload = function(){
-        //             console.log('加载完毕');
-        //             showImage(texture,img)
-        //         }
-        //         img.src = reader.result;
-            // console.log(dataUrlsImage)
+            reader.readAsDataURL(file);
+
+
+
         };
-        function showImage(texture,img) {
-            // gl.linkProgram(program) 
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1)
+        function showImage(texture, img) {
+            console.log(img)
+            document.body.appendChild(img)
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
             //开始0号纹理通道
             gl.activeTexture(gl.TEXTURE0);
             //想目标绑定纹理对象
@@ -136,27 +114,41 @@
             //配置纹理的参数
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-            gl.uniform1i(u_Sampler,0)
+            gl.uniform1i(u_Sampler, 0)
 
 
 
-            gl.clearColor(0,0,0,1.0);
+
             gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
-            console.log(u_Sampler);
-
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
         }
 
-
-
-
-
-
-
+        // 纹理加载器
+        function loadTexture(webgl, n, image) {
+            // 创建纹理对象
+            var texture = webgl.createTexture();
+            // 获取纹理的存储位置
+            // let u_Sampler = gl.getUniformLocation(program, 'u_Sampler');
+            var u_Sampler = webgl.getUniformLocation(program, 'u_Sampler');
+            //对纹理进行Y轴反转
+            webgl.pixelStorei(webgl.UNPACK_FLIP_Y_WEBGL, 1);
+            //开启0号纹理单元
+            webgl.activeTexture(webgl.TEXTURE0);
+            //向target绑定纹理对象
+            webgl.bindTexture(webgl.TEXTURE_2D, texture);
+            //配置纹理参数
+            webgl.texParameteri(webgl.TEXTURE_2D, webgl.TEXTURE_MIN_FILTER, webgl.LINEAR);
+            // webgl.texParameteri(webgl.TEXTURE_2D, webgl.TEXTURE_WRAP_S, webgl.CLAMP_TO_EDGE);
+            // webgl.texParameteri(webgl.TEXTURE_2D, webgl.TEXTURE_WRAP_T, webgl.MIRRORED_REPEAT);
+            //配置纹理图像
+            webgl.texImage2D(webgl.TEXTURE_2D, 0, webgl.RGB, webgl.RGB, webgl.UNSIGNED_BYTE, image);
+            //将0号纹理传递给着色器
+            webgl.uniform1i(u_Sampler, 0);
+            //绘图
+            webgl.clear(webgl.COLOR_BUFFER_BIT);
+            webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, n);
+        }
     </script>
-
-
-
 </body>
 
 </html>
