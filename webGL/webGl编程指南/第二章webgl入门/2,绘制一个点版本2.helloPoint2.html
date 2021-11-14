@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        let canvas = document.getElementById('canvas');
+        let gl = canvas.getContext('webgl');
+
+        let vertexShaderSource = `
+            attribute vec4 a_Postion;
+            void main(){
+                gl_Position = a_Postion;
+                gl_PointSize = 10.0;
+            }
+        `
+        let fragmentShaderSource = `
+            void main(){
+                gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+            }
+        `
+        //顶点着色器
+        let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
+        //片元着色器
+        let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader)
+
+        //创建程序片段
+        let program = gl.createProgram()
+        gl.attachShader(program, vertexShader)
+        gl.attachShader((program), fragmentShader)
+        gl.linkProgram(program);
+        //使用当前的程序片段
+        gl.useProgram(program);
+
+
+        //获取定点着色器的变量
+        let a_Positon = gl.getAttribLocation(program, 'a_Postion');
+        //赋值
+        gl.vertexAttrib3f(a_Positon, 0.0, 1.0, 0.0);
+        //设置背景颜色
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        //绘制点
+        gl.drawArrays(gl.POINTS, 0, 1)
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p{
+            font-size: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="file" onchange="loadFile(event)">
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div id="txt"></div>
+    <script>
+    
+   
+        const loadFile = (event) => {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                // 文件里的文本会在这里被打印出来 
+                let img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    huizhi(img)
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+
+        function huizhi(img) {
+            var context = canvas.getContext('2d');
+            console.log(canvas, context)
+            // 图片绘制
+            context.drawImage(img, 0, 0);
+            // 然后获取中间100*100区域数据
+            var txtDiv = document.getElementById('txt');
+ 
+            txtDiv.style.width = img.width + 'px';
+            var imgData = context.getImageData(0, 0, img.width, img.height);
+            var imgDataArr = imgData.data;
+            var imgDataWidth = imgData.width;
+            var imgDataHeight = imgData.height;
+            var html = '';
+            for (h = 0; h < imgDataHeight; h += 12) {
+                var p = '<p>';
+                for (w = 0; w < imgDataWidth; w += 6) {
+                    var index = (w + imgDataWidth * h) * 4;
+                    var r = imgDataArr[index + 0];
+                    var g = imgDataArr[index + 1];
+                    var b = imgDataArr[index + 2];
+                    var gray = getGray(r, g, b);
+                    p += toText(gray);
+                }
+                p += '</p>';
+                html += p;
+                console.log
+            }
+            txtDiv.innerHTML = html;
+        }
+
+
+   
+
+        // 根据灰度生成相应字符
+        function toText(g) {
+            if (g <= 30) {
+                return '#';
+            } else if (g > 30 && g <= 60) {
+                return '&';
+            } else if (g > 60 && g <= 120) {
+                return '$';
+            } else if (g > 120 && g <= 150) {
+                return '*';
+            } else if (g > 150 && g <= 180) {
+                return 'o';
+            } else if (g > 180 && g <= 210) {
+                return '!';
+            } else if (g > 210 && g <= 240) {
+                return ';';
+            } else {
+                return ' ';
+            }
+        }
+
+
+        // 根据rgb值计算灰度
+        function getGray(r, g, b) {
+            return 0.299 * r + 0.578 * g + 0.114 * b;
+        }
+
+
+    </script>
+</body>
+
+</html>

@@ -63,24 +63,12 @@ export default {
       this.$refs.loginFormRef.resetFields();
       console.log(this);
     },
-    login() {
-      // this.$refs.loginFormRef.validate(bool=>{
-      //     // console.log('------:',arguments)
-      //     if(!bool){
-      //         return;
-      //     }
-      //     console.log('------')
-      //     this.$http.post('login',this.loginForm).then((res)=>{
-      //         console.log('res:',res)
-      //     })
-      //     // console.log(res)
-      // })
+    login() { 
       this.$refs.loginFormRef.validate(async (bool) => {
      
         if (!bool) {
           return;
-        }
-        console.log("------");
+        } 
         const {data:res} = await this.$http.post("login", this.loginForm)
         if(res.meta.status != 200) this.$message.error(res.meta.msg) 
         console.log('res:',res)
@@ -93,6 +81,9 @@ export default {
       });
     },
   },
+  created(){
+    console.log(this)
+  }
 };
 </script>
 <style lang="less" scoped>

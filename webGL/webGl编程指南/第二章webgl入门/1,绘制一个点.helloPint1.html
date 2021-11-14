@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+    <script>
+        /*
+        在这里需要注意的是  在写vertexShaderSource与fragmentShaderSource 因为是没有文本提示的，很容易写错的
+        */
+        
+
+
+        //订单着色器
+        let vertexShaderSource = `
+            void main(){
+                gl_Position = vec4(0.0,0.0,0.0,1.0);
+                gl_PointSize = 10.0;
+            }
+        `
+        //片源着色器
+        let fragmentShaderSource = `
+            void main(){
+                gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+            }
+        `
+
+
+        let canvas = document.getElementById('canvas');
+        let gl = canvas.getContext("webgl2") ||
+          canvas.getContext("webgl") ||
+          canvas.getContext("experimental-webgl");('webgl')
+        //创建可使用定点着色器
+        let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        //赋值  vertexShader = vertexShaderSource
+        gl.shaderSource(vertexShader, vertexShaderSource); 
+        //编译 vertexShaderSource 的内容
+        gl.compileShader(vertexShader);
+        
+        //创建片源着色器
+        let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentShaderSource)
+        gl.compileShader(fragmentShader);
+
+        //创建一个可使用的程序 
+        let program = gl.createProgram()
+        gl.attachShader(program, vertexShader)
+        gl.attachShader(program, fragmentShader)
+        gl.linkProgram(program)
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            throw gl.getProgramInfoLog(program);
+        }
+
+        //使用创建好的程序
+        gl.useProgram(program);
+
+
+        //设置背景颜色
+        gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        //调取使用背景色的方法
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        //绘制类型为点 从第一个开始 绘制一次
+        gl.drawArrays(gl.POINTS, 0, 1)
+
+        
+
+    </script>    
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <input type="file" onchange="loadFile(event)">
+    <canvas id="canvas" width="250" height="167"></canvas>
+    <script>
+        let base64= [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+    ];
+    let imageString = ''
+ 
+
+
+        const loadFile = (event) => {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                // 文件里的文本会在这里被打印出来 
+                let img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    huizhi(img)
+                }
+            };
+            reader.readAsDataURL(file);
+
+        };
+        // 登录状态下不会出现这行文字，点击页面右上角一键登录
+
+
+        function huizhi(img) {
+            var context = canvas.getContext('2d');
+            console.log(canvas,context)
+            // 图片绘制
+            context.drawImage(img, 0, 0);
+            // 然后获取中间100*100区域数据
+            var imageData = context.getImageData(0, 0, 100, 100);
+            console.log(imageData.data)
+            var length = imageData.data.length;
+            let imgString=''
+            let imaIndex=0
+            for (var index = 0; index < length; index += 4) {
+                var r = imageData.data[index];
+                var g = imageData.data[index + 1];
+                var b = imageData.data[index + 2];
+                // 计算灰度
+                var gray = r * 0.299 + g * 0.587 + b * 0.114;
+                imageData.data[index] = r;
+                imageData.data[index + 1] = 0;
+                imageData.data[index + 2] = 0;
+                imaIndex++;
+                imgString = base64[r%4-1]
+                if(imaIndex == 100){
+                    imageString+='\n'+imgString
+                    imaIndex=0
+                }else{
+                    imageString+=imgString;
+                }
+            }
+            console.log(imageString)
+            // // 更新新数据
+            context.putImageData(imageData, 0, 0);
+
+        }
+    </script>
+</body>
+
+</html>

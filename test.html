@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="box">
+        <input type="file" multiple id="input" value="valueTest" onchange="" accept="image/*">
+        <input type="file" multiple id="imgLocal" accept="image/*" />
+
+    </div>
+    <script>
+
+
+// 有一个函数，参数是一个函数，返回值也是一个函数，返回的函数功能和入参的函数相同，但这个函数只能执行3次，再次执行无效，如何实现？￼
+
+// function test(fn) {
+//     // 需要实现的函数
+// }
+
+// const foo = test(fn)
+// foo()
+// foo()
+// foo() // 前三次有效
+// foo() // 后面再执行无效￼
+
+
+// function test(fn) {
+//     let num = 0;
+//     return function(){
+//         if(num>2) return
+//         num ++ ;
+//         fn();
+//     }
+// }
+
+// const foo = test(function(){console.log('ok')})
+// foo()
+// foo()
+// foo() // 前三次有效
+// foo() // 后面再执行无效￼
+
+
+
+    </script>
+    <!-- ajax  -->
+    <script>
+        //get
+        function sendGet() {
+            const xml = new XMLHttpRequest();
+            xml.timeout = 2000;
+            xml.open('GET', 'xxxxx');
+            xml.send();
+            xml.onreadystatechange = function () {
+                if (xml.readyState === 4) {
+                    if (xml.status === 200) {
+                        console.log(xml.responseText)
+                    }
+                }
+
+            }
+            xml.ontimeout = function () {
+                console.log('超时了')
+            }
+            xml.onloadstart = function () { }
+            xml.onloadend = function () { }
+            xml.onerror = function () { }
+            xml.abort()
+        }
+
+        const sendPost = function () {
+            const xhr = new XMLHttpRequest()
+            xhr.open('POST', 'xxxxx');
+            xhr.timeout = 2000;
+            xhr.onprogress
+        }
+
+    </script>
+
+    <script>
+        const input = document.getElementById('input');
+        input.onchange = function () {  
+            let files = document.getElementById('input').files[0]
+            let readFile = new FileReader()
+            readFile.readAsDataURL(files)
+            console.log(readFile)
+            readFile.onloadend = function (e) {
+                console.log(readFile.result)
+            }
+        }
+        
+        function text(){
+            let blob = new Blob(['你好啊'],{type:'text/plain'})
+            console.log(blob)
+            let fileRead = new FileReader()
+            fileRead.readAsText(blob)
+            fileRead.onload = function(){
+                console.log(fileRead.result)
+            }
+        }
+        function file(){
+            let blob = new File(['你好啊'],{type:'text/plain'})
+            console.log(blob)
+            let fileRead = new FileReader()
+            fileRead.readAsText(blob)
+            fileRead.onload = function(){
+                console.log('File:',fileRead.result)
+            }
+        }
+        // text()
+        file()
+    </script>
+</body>
+
+</html>
