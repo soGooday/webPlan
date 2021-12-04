@@ -21,9 +21,9 @@
         `
         let fragmentShaderSouce = `
             precision mediump float;
-            uniform vec3 u_FragColor;
+            uniform vec4 u_FragColor;
             void main(){
-                gl_FragColor = vec4(u_FragColor,1.0);
+                gl_FragColor = u_FragColor;
             }
         `
 
@@ -46,9 +46,15 @@
             throw gl.getProgramInfoLog(program);
         }
 
-        let positonArray = new Float32Array([-0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5,])
-        let colorList = new Float32Array(12)
-        for (let index = 0; index < 12; index++) { 
+        let positonArray = new Float32Array([
+            -0.5,0.5,0.041, 0.223,0.378,0.790,
+            -0.5,-0.5,0.6705,0.3583,0.619, 0.6784,
+            0.5,0.5,0.846,0.38913,0.5195,0.72885,
+            0.5,-0.5,0.2606,0.1039,0.266,0.75985
+        ]
+        )
+        let colorList = new Float32Array(16)
+        for (let index = 0; index < 16; index++) { 
             colorList[index] =  Math.random()
         } 
 
@@ -57,20 +63,20 @@
         let buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
         gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 6*4, 0)
         gl.enableVertexAttribArray(a_Position);
 
         let colorBuffer = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-        gl.bufferData(gl.ARRAY_BUFFER, colorList,gl.STATIC_DRAW)
-        gl.vertexAttribPointer(u_FragColor, 3, gl.FLOAT, false, 0, 4)
-        gl.enableVertexAttribArray(u_FragColor);
-        console.log(colorList,u_FragColor)
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, positonArray,gl.STATIC_DRAW)
+        gl.vertexAttribPointer(u_FragColor, 4, gl.FLOAT, false, 6*4, 2*4)
+        gl.enableVertexAttribArray(u_FragColor); 
         //绘制
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 24/6)
 
+        console.log(positonArray)
 
   
     </script>

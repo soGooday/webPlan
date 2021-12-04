@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-    
+    <h3>可以按下按键ADSW</h3>
     <canvas id='canvas'></canvas>
     <script>
         let canvas = document.getElementById('canvas');
@@ -15,8 +17,9 @@
 
         let vertexShaderSource = `
             attribute vec2 a_Position;
+            uniform vec2 u_Translation;
             void main(){
-                gl_Position = vec4(a_Position,0.0,1.0) ; 
+                gl_Position = vec4(u_Translation+a_Position,0.0,1.0) ; 
             }
         `
         let fragmentShaderSouce = `
@@ -46,22 +49,66 @@
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(program);
         }
-
-        let positonArray = new Float32Array([1.0,0.0,-1.0,0.0,0.0,-1.0])
+        let translationX = 0.0;
+        let translationY = 0.0;
+        let positonArray = new Float32Array([1.0, 0.0, -1.0, 0.0, 0.0, -1.0])
         let a_Position = gl.getAttribLocation(program, 'a_Position');
-
+        let u_Translation = gl.getUniformLocation(program, 'u_Translation')
         let buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
         gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW)
         gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
         gl.enableVertexAttribArray(a_Position);
 
-     
+  
+
         //绘制
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 3)
+     
+
+
+        const render = function () {
+            gl.uniform2f(u_Translation, translationX, translationY)
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 3)
+        }
+        render()
+
+        document.onkeydown = function (e) {    //对整个页面监听  
+            var keyNum = window.event ? e.keyCode : e.which;       //获取被按下的键值  
+            //判断如果用户按下了回车键（keycody=13）  
+            if (keyNum == 65) {
+                console.log('A');
+                translationX -= 0.1; 
+                render()
+            }
+
+            //判断如果用户按下了空格键(keycode=32)，  
+            if (keyNum == 68) {
+                console.log('D');
+                translationX += 0.1; 
+                render()
+            }
+            //判断如果用户按下了空格键(keycode=32)，  
+            if (keyNum == 83) {
+                console.log('S');
+                translationY -= 0.1; 
+                render()
+            }
+
+
+            //判断如果用户按下了空格键(keycode=32)，  
+            if (keyNum == 87) {
+                console.log('W');
+                translationY += 0.1; 
+                render();
+
+            }
+
+        }
+
 
     </script>
 </body>
+
 </html>
