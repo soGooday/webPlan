@@ -106,9 +106,13 @@
         //每次按钮建筑按的角度
         var ANGLE_STEP = 3.0;
         //arm1 当前的角度
-        var arm_1_rotate = 90;
-        //arm2 当前的角度
-        var arm_2_rotate = 30;
+        var g_arm1Angle = 90;
+        //joint1 当前的角度
+        var g_joint1Angle = 45.0;
+        //joint2 当前的角度
+        var g_joint2Angle = 0.0;
+        //joint3 当前的角度
+        var g_joint3Angle = 0.0;
         var rotateX = 1;
         var rotateY = 0;
         //创建变量 顶点点跟颜色
@@ -250,23 +254,23 @@
         function draw({ projMat4, viewMat4, modelMat4, normalMat4, gl, indices }) {
             // var ANGLE_STEP = 3.0;
             // //arm1 当前的角度
-            // var arm_1_rotate = 90;
+            // var g_arm1Angle = 90;
             // //arm2 当前的角度
-            // var arm_2_rotate = 0; 
-            var arm1Lenght = 10.0;
+            // var g_joint1Angle = 0; 
+            var arm1Length = 10.0;
             modelMat4.setTranslate(0.0, -12.0, 0.0); //位移 
-            modelMat4.rotate(arm_1_rotate, 0.0, 1.0, 0.0);   // 以X轴旋转90度
+            modelMat4.rotate(g_arm1Angle, 0.0, 1.0, 0.0);   // 以X轴旋转90度
             drawBox({ projMat4, viewMat4, modelMat4, gl, indices })
 
 
-            modelMat4.translate(0.0, arm1Lenght, 0.0); //位移 
-            modelMat4.rotate(arm_2_rotate, 0.0, 0.0, 1.0);   // 以X轴旋转90度 
+            modelMat4.translate(0.0, arm1Length, 0.0); //位移 
+            modelMat4.rotate(g_joint1Angle, 0.0, 0.0, 1.0);   // 以X轴旋转90度 
             modelMat4.scale(1.3, 1.0, 1.3); //位移 
             drawBox({ projMat4, viewMat4, modelMat4, gl, indices })
 
         }
         //绘制当前的单独的一个矩形
-        function drawBox({ projMat4, viewMat4, modelMat4, gl, indices }) {
+        function drawBox({ projMat4, viewMat4, modelMat4, width, height, deep, gl, indices }) {
             //mvp矩阵
             let mvpMat4 = new Matrix4();
             mvpMat4.set(projMat4).multiply(viewMat4).multiply(modelMat4);
@@ -292,7 +296,7 @@
             //判断如果用户按下了回车键（keycody=13）  
             if (keyNum == 65) {
                 console.log('A');
-                arm_1_rotate -= ANGLE_STEP;
+                g_arm1Angle -= ANGLE_STEP;
                 // rotateX = 1;
                 // rotateY = 0;
                 // yesX -= 0.1
@@ -303,7 +307,7 @@
             //判断如果用户按下了空格键(keycode=32)，  
             if (keyNum == 68) {
                 console.log('D');
-                arm_1_rotate += ANGLE_STEP;
+                g_arm1Angle += ANGLE_STEP;
                 // rotateX = 1;
                 // rotateY = 0;
                 // yesX += 0.1
@@ -313,7 +317,7 @@
             //判断如果用户按下了空格键(keycode=32)，  
             if (keyNum == 83) {
                 console.log('S');
-                arm_2_rotate += ANGLE_STEP;
+                g_joint1Angle += ANGLE_STEP;
                 // rotateY = 1;
                 // rotatX = 0;
                 // yesZ += 0.1;
@@ -325,7 +329,7 @@
             //判断如果用户按下了空格键(keycode=32)，  
             if (keyNum == 87) {
                 console.log('W');
-                arm_2_rotate -= ANGLE_STEP;
+                g_joint1Angle -= ANGLE_STEP;
                 // rotateY = 1;
                 // rotatX = 0;
                 // yesZ -= 0.1;
