@@ -13,23 +13,23 @@
         /*
         在这里需要注意的是  在写vertexShaderSource与fragmentShaderSource 因为是没有文本提示的，很容易写错的
         */
-        
-
-
+         
         //订单着色器
         let vertexShaderSource = `
             void main(){
+                //当前的顶点坐标
                 gl_Position = vec4(0.0,0.0,0.0,1.0);
+                //设置点的大小
                 gl_PointSize = 10.0;
             }
         `
         //片源着色器
         let fragmentShaderSource = `
             void main(){
+                //设置顶点中对应的颜色
                 gl_FragColor = vec4(1.0,0.0,0.0,1.0);
             }
-        `
-
+        ` 
 
         let canvas = document.getElementById('canvas');
         let gl = canvas.getContext("webgl2") ||
@@ -44,7 +44,9 @@
         
         //创建片源着色器
         let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, fragmentShaderSource)
+        //将片源或着色器中赋值
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        //将赋值编译为OpenGL ES 能够识别的代码
         gl.compileShader(fragmentShader);
 
         //创建一个可使用的程序 
@@ -54,11 +56,9 @@
         gl.linkProgram(program)
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(program);
-        }
-
-        //使用创建好的程序
-        gl.useProgram(program);
-
+        } 
+        //使用创建好的程序 （这一步的好处是 我们可以提前写好很多着色器片断，然后给对象使用不同的着色器代码，就会变的很强大）
+        gl.useProgram(program); 
 
         //设置背景颜色
         gl.clearColor(0.0, 0.0, 0.0, 1.0)
