@@ -13,10 +13,10 @@
     <button id='clearBtn'>画布清除点</button>
     <script>
         let canvas = document.getElementById('canvas');
-        canvas.width=400;
-        canvas.height=400;
+        canvas.width = 400;
+        canvas.height = 400;
         let gl = canvas.getContext('webgl');
-
+        //顶点着色器
         let vertexShaderSource = `
             attribute vec4  a_Postion;
             void main(){
@@ -24,6 +24,7 @@
                 gl_PointSize = 10.0;
             }
         `
+        //片源着色器
         let fragmentShaderSource = `\
             void main(){
                 gl_FragColor = vec4(1.0,0.0,0.0,1.0);
@@ -45,31 +46,40 @@
         gl.linkProgram(program);
         //使用当前的程序片段
         gl.useProgram(program);
-
+        //取到变量
         let a_Position = gl.getAttribLocation(program, 'a_Postion')
 
-        let pointList = [] 
+        //将顶点的坐标记录下来 然后赋值给顶点坐标的变量 再从新绘制
+        let pointList = []
+        //设置清空画布的颜色
         gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        //使用清空画布
         gl.clear(gl.COLOR_BUFFER_BIT)
-        canvas.onmousedown = function (params) { 
-      
-            let { clientX, clientY } = params; 
-            let rect = params.target.getBoundingClientRect(); 
+        //鼠标按下的方法
+        canvas.onmousedown = function (params) {
+            //获取鼠标的坐标点
+            let { clientX, clientY } = params;
+            let rect = params.target.getBoundingClientRect();
+            //将坐标带你转化为 -1 到 1之间的坐标 用于webgl的坐标展示
             pointList.push({
-                x: clientX/canvas.offsetWidth *2 -1 ,
-                y: (clientY/canvas.offsetWidth *2 -1  ) *-1
+                x: clientX / canvas.offsetWidth * 2 - 1,
+                y: (clientY / canvas.offsetWidth * 2 - 1) * -1
             })
+            //清空画布
             gl.clear(gl.COLOR_BUFFER_BIT)
+            //赋值 + 绘制
             for (let index = 0; index < pointList.length; index++) {
                 const { x, y } = pointList[index];
                 console.log(x, y)
-                gl.vertexAttrib3f(a_Position,x, y,0.0 )
-               
+                //将之前储蓄的坐标点进行赋值
+                gl.vertexAttrib3f(a_Position, x, y, 0.0)
+                //绘制
                 gl.drawArrays(gl.POINTS, 0, 1)
             }
         }
+        //清空画布的按钮
         let nodeBtn = document.getElementById('clearBtn');
-        nodeBtn.addEventListener('click',()=>{
+        nodeBtn.addEventListener('click', () => {
             pointList = []
             gl.clear(gl.COLOR_BUFFER_BIT)
         })
