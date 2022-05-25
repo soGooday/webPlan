@@ -13,17 +13,18 @@
     <button id='clearBtn'>画布清除点</button>
     <script>
         let canvas = document.getElementById('canvas');
-        canvas.width=400;
-        canvas.height=400;
+        canvas.width = 400;
+        canvas.height = 400;
         let gl = canvas.getContext('webgl');
-
+        //顶点着色器
         let vertexShaderSource = `
-            attribute vec4  a_Postion;
+            attribute vec4  a_Position;
             void main(){
-                gl_Position = a_Postion;
+                gl_Position = a_Position;
                 gl_PointSize = 10.0;
             }
         `
+        //片源着色器
         let fragmentShaderSource = `
             precision mediump float;
             uniform vec4 u_FragColor;
@@ -47,48 +48,57 @@
         gl.linkProgram(program);
         //使用当前的程序片段
         gl.useProgram(program);
-        
-        //点的坐标
-        let a_Position = gl.getAttribLocation(program, 'a_Postion')
-        //点颜色的变量
+
+        //获取点的坐标变量
+        let a_Position = gl.getAttribLocation(program, 'a_Position')
+        //获取点颜色的变量
         let u_FragColor = gl.getUniformLocation(program, 'u_FragColor')
-            console.log('u_FragColor:',u_FragColor)
-        let pointList = [] 
+        //记录下来左右点击过canvas的坐标值
+        let pointList = []
+        //设置清空颜色
         gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        //清空webgl使用设置的背景色gl.clearColor(0.0, 0.0, 0.0, 1.0)
         gl.clear(gl.COLOR_BUFFER_BIT)
-        canvas.onmousedown = function (params) { 
-      
-            let { clientX, clientY } = params;   
+        canvas.onmousedown = function (params) {
+
+            let { clientX, clientY } = params;
             let color = randomColor()
-            console.log('color:',color)
+            console.log('color:', color)
+            //将坐标带你转化为 -1 到 1之间的坐标 用于webgl的坐标展示
             pointList.push({
-                x: clientX/canvas.offsetWidth *2 -1 ,
-                y: (clientY/canvas.offsetWidth *2 -1  ) *-1,
-                color:color
+                x: clientX / canvas.offsetWidth * 2 - 1,
+                y: (clientY / canvas.offsetWidth * 2 - 1) * -1,
+                color: color
             })
+            //清空webgl使用设置的背景色gl.clearColor(0.0, 0.0, 0.0, 1.0)
             gl.clear(gl.COLOR_BUFFER_BIT)
             for (let index = 0; index < pointList.length; index++) {
-                const { x, y ,color} = pointList[index];
+                const { x, y, color } = pointList[index];
+                //开始赋值
                 console.log(color)
-                gl.vertexAttrib3f(a_Position,x, y,0.0 )
-                gl.uniform4f(u_FragColor,color.r, color.b,color.g, color.a)
+                //顶点赋值
+                gl.vertexAttrib3f(a_Position, x, y, 0.0)
+                //设置上面顶点的色织
+                gl.uniform4f(u_FragColor, color.r, color.b, color.g, color.a)
+                //绘制出来
                 gl.drawArrays(gl.POINTS, 0, 1)
             }
         }
+        //清除按钮事件
         let nodeBtn = document.getElementById('clearBtn');
-        nodeBtn.addEventListener('click',()=>{
+        nodeBtn.addEventListener('click', () => {
             pointList = []
             gl.clear(gl.COLOR_BUFFER_BIT)
         })
-
+        //随机获得颜色
         function randomColor() {
-        return {
-            r: Math.random(),
-            g: Math.random(),
-            b: Math.random(),
-            a: 1
-        };
-    }
+            return {
+                r: Math.random(),
+                g: Math.random(),
+                b: Math.random(),
+                a: 1
+            };
+        }
 
     </script>
 </body>
