@@ -12,7 +12,8 @@
 </head>
 
 <body>
-    <p>可以按下AD ws键 能够检测出来</p>
+    <p>当前是检测绘制透明与不透明的物体同在</p>
+    <p>同时当前也是一个着色器，下一个例子中我们会使用两个不同着色器</p>
     <canvas> </canvas>
 
     <script>
@@ -94,13 +95,21 @@
             1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0   // v4-v7-v6-v5 back
         ]);
 
-        var colors = new Float32Array([     // Colors
+        var colors2 = new Float32Array([     // Colors
             0.5, 0.5, 1.0, 0.4, 0.5, 0.5, 1.0, 0.4, 0.5, 0.5, 1.0, 0.4, 0.5, 0.5, 1.0, 0.4,  // v0-v1-v2-v3 front(blue)
             0.5, 1.0, 0.5, 0.4, 0.5, 1.0, 0.5, 0.4, 0.5, 1.0, 0.5, 0.4, 0.5, 1.0, 0.5, 0.4,  // v0-v3-v4-v5 right(green)
             1.0, 0.5, 0.5, 0.4, 1.0, 0.5, 0.5, 0.4, 1.0, 0.5, 0.5, 0.4, 1.0, 0.5, 0.5, 0.4,  // v0-v5-v6-v1 up(red)
             1.0, 1.0, 0.5, 0.4, 1.0, 1.0, 0.5, 0.4, 1.0, 1.0, 0.5, 0.4, 1.0, 1.0, 0.5, 0.4,  // v1-v6-v7-v2 left
             1.0, 1.0, 1.0, 0.4, 1.0, 1.0, 1.0, 0.4, 1.0, 1.0, 1.0, 0.4, 1.0, 1.0, 1.0, 0.4,  // v7-v4-v3-v2 down
             0.5, 1.0, 1.0, 0.4, 0.5, 1.0, 1.0, 0.4, 0.5, 1.0, 1.0, 0.4, 0.5, 1.0, 1.0, 0.4   // v4-v7-v6-v5 back
+        ]);
+        var colors = new Float32Array([     // Colors
+            0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0,  // v0-v1-v2-v3 front(blue)
+            0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0,  // v0-v3-v4-v5 right(green)
+            1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0,  // v0-v5-v6-v1 up(red)
+            1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0,  // v1-v6-v7-v2 left
+            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v7-v4-v3-v2 down
+            0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0   // v4-v7-v6-v5 back
         ]);
 
         var indices = new Uint8Array([       // Indices of the vertices
@@ -111,63 +120,81 @@
             16, 17, 18, 16, 18, 19,    // down
             20, 21, 22, 20, 22, 23     // back
         ]);
-        //获取bit位
-        var bitSize = vertices.BYTES_PER_ELEMENT
-
-        //对变量顶点进行赋值 
-        let buffer = gl.createBuffer();   //方法可创建并初始化一个用于储存顶点数据或着色数据的WebGLBuffer对象
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        // gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);//或者下面这个
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 3 * bitSize, 0);
-        gl.enableVertexAttribArray(a_Position);//开启变量的使用刚刚赋值的变量
-
-        //对颜色进行赋值
-        var colorsSize = colors.BYTES_PER_ELEMENT
-        let colorBUffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBUffer);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-        // gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0)//或者下面这个
-        gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 4 * colorsSize, 0)
-        gl.enableVertexAttribArray(a_Color);//开启变量的使用刚刚赋值的变量
-
-        //创建index对应量
-        let indexBuffer = gl.createBuffer()
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
-
-
         //矩阵
         var mvpMat4 = new Matrix4();//mvp矩阵
         var projMat4 = new Matrix4();//投影矩阵
         var viewMat4 = new Matrix4();//视图矩阵
         var modelMat4 = new Matrix4();//模型矩阵
-        //投影矩阵 设置
-        projMat4.setPerspective(30, canvas.width / canvas.height, 1, 100);
-        //视图矩阵 设置
-        viewMat4.setLookAt(yesX, yesY, yesZ, 0, 0, 0, 0, 1, 0);
-        //模型矩阵 设置
-        modelMat4.setTranslate(0, 0, 0)
-        //计算出模型视图投影矩阵
-        mvpMat4.set(projMat4).multiply(viewMat4).multiply(modelMat4)
+        /**
+         * 
+         */
+        function initColor({ colors, setTranslate, scale }) {
+            //获取bit位
+            var bitSize = vertices.BYTES_PER_ELEMENT
 
+            //对变量顶点进行赋值 
+            let buffer = gl.createBuffer();   //方法可创建并初始化一个用于储存顶点数据或着色数据的WebGLBuffer对象
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            // gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);//或者下面这个
+            gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 3 * bitSize, 0);
+            gl.enableVertexAttribArray(a_Position);//开启变量的使用刚刚赋值的变量 
 
-        //对mvp矩阵进行赋值 使用变量
-        gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat4.elements);
+            //对颜色进行赋值
+            var colorsSize = colors.BYTES_PER_ELEMENT
+            let colorBUffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorBUffer);
+            gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+            // gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0)//或者下面这个
+            gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 4 * colorsSize, 0)
+            gl.enableVertexAttribArray(a_Color);//开启变量的使用刚刚赋值的变量 
 
+            //创建index对应量
+            let indexBuffer = gl.createBuffer()
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+            //投影矩阵 设置
+            projMat4.setPerspective(30, canvas.width / canvas.height, 1, 100);
+            //视图矩阵 设置
+            viewMat4.setLookAt(yesX, yesY, yesZ, 0, 0, 0, 0, 1, 0);
+            //模型矩阵 设置
+            modelMat4.setTranslate(...setTranslate)
+            modelMat4.scale(...scale)
+            //计算出模型视图投影矩阵
+            mvpMat4.set(projMat4).multiply(viewMat4).multiply(modelMat4);
+            //对mvp矩阵进行赋值 使用变量
+            gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMat4.elements);
 
+        }
+
+        //先绘制不存在透明的
+        this.initColor({ colors, setTranslate: [1.0, 0.0, -2.0], scale: [0.5, 0.5, 0.5] });
         //开始进行绘制 绘制右边三角形
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);//深度剔除剔除 
-        //我们可以把深度缓冲区给他锁定 这样能达到跟9 BlendedCube.html 一样的效果
-
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        gl.depthMask(false)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);//清除相关数据
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
-    
+
+
+        //再绘制透明的 
+        this.initColor({ colors: colors2, setTranslate: [-1.0, 0.0, -5.0], scale: [0.5, 0.9, 0.9] });
+        //使用混合
+        gl.enable(gl.BLEND);
+        //选择混合方案
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //我们可以把深度缓冲区给他锁定
+        gl.depthMask(false);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
+
+        //不透明前面的那个
+        this.initColor({ colors: colors2, setTranslate: [1.0, 0.0, -1.0], scale: [0.3, 0.2, 0.6] })
+        //使用混合  
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
+
+        //不透明后面的那个
+        this.initColor({ colors: colors2, setTranslate: [1.0, 0.0, -4.0], scale: [0.3, 0.9, 0.6] })
+        //使用混合  
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
 
 
 

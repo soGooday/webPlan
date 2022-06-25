@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #canvas {
+            margin: 0;
+            display: block;
+        }
+    </style>
+</head>
+
+<body onload="main()">
+    <canvas id="canvas" height="800" width="800"></canvas>
+</body>
+<script src="lib/cuon-matrix.js"></script>
+<script>
+    var canvas = document.getElementById("canvas");
+    canvas.width = 400;
+    canvas.height = 400;
+    let gl = canvas.getContext('webgl')
+    if (!gl) {
+        console.log("你的浏览器不支持WebGL");
+
+    }
+    //单色立方体的着色器
+    var solidVertexShaderSource = "" +
+        "attribute vec4 a_Position;\n" +
+        "attribute vec4 a_Normal;\n" +
+        "uniform mat4 u_MvpMatrix;\n" +
+        "uniform mat4 u_NormalMatrix;\n" +
+        "varying vec4 v_Color;\n" +
+        "void main(){\n" +
+        "   vec3 lightDirection = vec3(0.0,0.0, 1.0);\n" +//设置灯光的坐标位置（世界坐标下）
+        "   vec4 color = vec4(0.0, 1.0, 1.0, 1.0);\n" + //设置立方体的颜色
+        "   gl_Position = u_MvpMatrix * a_Position;\n" +
+        "   vec3 normal = normalize(vec3(u_NormalMatrix * a_Normal));\n" +
+        "   float nDotL = max(dot(normal, lightDirection), 0.0);\n" +
+        "   v_Color = vec4(color.rgb * nDotL, color.a);\n" +
+        "}\n";
+
+    var solidFragmentShaderSource = "" +
+        "#ifdef GL_ES\n" +
+        "precision mediump float;\n" +
+        "#endif\n" +
+        "varying vec4 v_Color;\n" +
+        "void main(){\n" +
+        "   gl_FragColor = v_Color;\n" +
+        "}\n";
+
+    //纹理立方体的着色器
+    var textureVertexShaderSource = "" +
+        "attribute vec4 a_Position;\n" +
+        "attribute vec4 a_Normal;\n" +
+        "attribute vec2 a_TexCoord;\n" +
+        "uniform mat4 u_MvpMatrix;\n" +
+        "uniform mat4 u_NormalMatrix;\n" +
+        "varying float v_NdotL;\n" +
+        "varying vec2 v_TexCoord;\n" +
+        "void main(){\n" +
+        "   vec3 lightDirection = vec3(0.0, 0.0, 1.0);\n" +
+        "   gl_Position = u_MvpMatrix * a_Position;\n" +
+        "   vec3 normal = normalize(vec3(u_NormalMatrix * a_Normal));\n" +
+        "   v_NdotL = max(dot(normal, lightDirection), 0.0);\n" +
+        "   v_TexCoord = a_TexCoord;\n" +
+        "}\n";
+
+    var textureFragmentShaderSource = "" +
+        "#ifdef GL_ES\n" +
+        "precision mediump float;\n" +
+        "#endif\n" +
+        "uniform sampler2D u_Sampler;\n" +
+        "varying vec2 v_TexCoord;\n" +
+        "varying float v_NdotL;\n" +
+        "void main(){\n" +
+        "   vec4 color = texture2D(u_Sampler, v_TexCoord);\n" +
+        "   gl_FragColor = vec4(color.rgb * v_NdotL, color.a);\n" +
+        "}\n";
+
+
+
+
+    function main() { 
+        // Create a cube
+        //    v6----- v5
+        //   /|      /|
+        //  v1------v0|
+        //  | |     | |
+        //  | |v7---|-|v4
+        //  |/      |/
+        //  v2------v3
+
+        var vertices = new Float32Array([   // 单色立方体的顶点位置数据
+            1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,    // v0-v1-v2-v3 front
+            1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0,    // v0-v3-v4-v5 right
+            1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0,    // v0-v5-v6-v1 up
+            -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0,    // v1-v6-v7-v2 left
+            -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,    // v7-v4-v3-v2 down
+            1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0     // v4-v7-v6-v5 back
+        ]);
+
+        var normals = new Float32Array([   // 单色立方体的法相量
+            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,     // v0-v1-v2-v3 front
+            1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,     // v0-v3-v4-v5 right
+            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,     // v0-v5-v6-v1 up
+            -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0,     // v1-v6-v7-v2 left
+            0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0,     // v7-v4-v3-v2 down
+            0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0      // v4-v7-v6-v5 back
+        ]);
+
+        var texCoords = new Float32Array([   // 纹理的坐标
+            1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,    // v0-v1-v2-v3 front
+            0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,    // v0-v3-v4-v5 right
+            1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,    // v0-v5-v6-v1 up
+            1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,    // v1-v6-v7-v2 left
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,    // v7-v4-v3-v2 down
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0     // v4-v7-v6-v5 back
+        ]);
+
+        var indices = new Uint8Array([        // 索引值
+            0, 1, 2, 0, 2, 3,    // front
+            4, 5, 6, 4, 6, 7,    // right
+            8, 9, 10, 8, 10, 11,    // up
+            12, 13, 14, 12, 14, 15,    // left
+            16, 17, 18, 16, 18, 19,    // down
+            20, 21, 22, 20, 22, 23     // back
+        ]);
+
+        //初始化两个程序对象的着色器
+        var solidProgram = initProgram(gl, solidVertexShaderSource, solidFragmentShaderSource);
+        var textureProgram = initProgram(gl, textureVertexShaderSource, textureFragmentShaderSource);
+        //开启隐藏面消除功能，并设置背景色
+        gl.enable(gl.DEPTH_TEST);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);//清除相关数据
+        //计算视图投影矩阵
+        var viewProjectMatrix = new Matrix4();
+        viewProjectMatrix.setPerspective(30.0, canvas.width / canvas.height, 1.0, 100.0);
+        viewProjectMatrix.lookAt(0.0, 0.0, 15.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+        //开始绘制立方体
+        var currentAngle = 0.0; // 当前立方体的角度  
+
+
+        draw()
+        draw2()
+
+        //会制作带颜色的立方体
+        function draw() {
+            //使用带颜色的
+            gl.useProgram(solidProgram);
+            //获取单色立方体的的变量
+            let a_Position = gl.getAttribLocation(solidProgram, "a_Position");
+            let a_Normal = gl.getAttribLocation(solidProgram, "a_Normal");
+            let u_MvpMatrix = gl.getUniformLocation(solidProgram, "u_MvpMatrix");
+            let u_NormalMatrix = gl.getUniformLocation(solidProgram, "u_NormalMatrix");
+
+            var vertices_buffer = gl.createBuffer(); // 创建一个缓冲区对象  
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertices_buffer); //将数据写入缓冲区对象
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(a_Position);
+
+            var normals_buffer = gl.createBuffer(); // 创建一个缓冲区对象  
+            gl.bindBuffer(gl.ARRAY_BUFFER, normals_buffer); //将数据写入缓冲区对象
+            gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+            gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(a_Normal);
+
+            var indices_buffer = gl.createBuffer(); //创建一个缓冲区对象 
+            //将数据写入缓冲区
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices_buffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+
+            //声明绘制需要变换矩阵变量
+            var g_modelMatrix = new Matrix4();
+            var g_mvpMatrix = new Matrix4();
+            var g_normalMatrix = new Matrix4();
+            g_modelMatrix.setTranslate(1.5, 0.0, 0.0);
+            g_modelMatrix.rotate(20.0, 1.0, 0.0, 0.0);
+            g_modelMatrix.rotate(currentAngle, 0.0, 1.0, 0.0);
+
+            //计算出法向量的方向，并赋值
+            g_normalMatrix.setInverseOf(g_modelMatrix);
+            g_normalMatrix.transpose();
+            gl.uniformMatrix4fv(u_NormalMatrix, false, g_modelMatrix.elements);
+
+            //计算模型视图投影矩阵
+            g_mvpMatrix.set(viewProjectMatrix);
+            g_mvpMatrix.multiply(g_modelMatrix);
+            gl.uniformMatrix4fv(u_MvpMatrix, false, g_mvpMatrix.elements);
+
+
+            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+        }
+
+        //绘制带图片的
+        function draw2() {
+            gl.useProgram(textureProgram);
+
+            //获取变量
+            let a_Position = gl.getAttribLocation(textureProgram, "a_Position");
+            let a_Normal = gl.getAttribLocation(textureProgram, "a_Normal");
+            let a_TexCoord = gl.getAttribLocation(textureProgram, "a_TexCoord");
+            let u_MvpMatrix = gl.getUniformLocation(textureProgram, "u_MvpMatrix");
+            let u_NormalMatrix = gl.getUniformLocation(textureProgram, "u_NormalMatrix");
+            let u_Sampler = gl.getUniformLocation(textureProgram, "u_Sampler");
+
+            var vertices_buffer = gl.createBuffer(); // 创建一个缓冲区对象  
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertices_buffer); //将数据写入缓冲区对象
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(a_Position);
+
+            var normals_buffer = gl.createBuffer(); // 创建一个缓冲区对象  
+            gl.bindBuffer(gl.ARRAY_BUFFER, normals_buffer); //将数据写入缓冲区对象
+            gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+            gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(a_Normal);
+
+            var a_TexCoord_buffer = gl.createBuffer(); // 创建一个缓冲区对象  
+            gl.bindBuffer(gl.ARRAY_BUFFER, a_TexCoord_buffer); //将数据写入缓冲区对象
+            gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+            gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(a_TexCoord);
+
+
+            var indices_buffer = gl.createBuffer(); //创建一个缓冲区对象 
+            //将数据写入缓冲区
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices_buffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+
+            var texture = gl.createTexture();
+            if (!texture) {
+                console.log("无法创建纹理缓冲区");
+                return null;
+            }
+
+            var img = new Image();
+            img.onload = function () {
+                //将图形数据存入纹理对象
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+                //将纹理存入到第一个纹理缓冲区
+                gl.useProgram(textureProgram);
+                gl.uniform1i(u_Sampler, 0);
+
+                //设置好纹理对象，开启使用0号的纹理 
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+
+                draw()
+            };
+            img.src = './resources/orange.jpg';
+
+            function draw() {
+                //绘制贴图
+                var g_modelMatrix = new Matrix4();
+                var g_mvpMatrix = new Matrix4();
+                var g_normalMatrix = new Matrix4();
+                g_modelMatrix.setTranslate(-1.5, 0.0, 0.0);
+                g_modelMatrix.rotate(20.0, 1.0, 0.0, 0.0);
+                g_modelMatrix.rotate(currentAngle, 0.0, 1.0, 0.0);
+
+                //计算出法向量的方向，并赋值
+                g_normalMatrix.setInverseOf(g_modelMatrix);
+                g_normalMatrix.transpose();
+                gl.uniformMatrix4fv(u_NormalMatrix, false, g_modelMatrix.elements);
+
+                //计算模型视图投影矩阵
+                g_mvpMatrix.set(viewProjectMatrix);
+                g_mvpMatrix.multiply(g_modelMatrix);
+                gl.uniformMatrix4fv(u_MvpMatrix, false, g_mvpMatrix.elements);
+
+
+                gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+            } 
+        }
+
+    }
+    /**
+         * 传入当前的的顶点着色器与片源着色器生成 程序
+         * vexterSource     顶点着色器
+         * fragmentSource   片源着色器
+         */
+    function initProgram(gl, vertexSource, fragmentSource) {
+        let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexSource);
+        gl.compileShader(vertexShader);
+        //纠错使用
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(vertexShader));
+        }
+
+        let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentSource);
+        gl.compileShader(fragmentShader);
+        //纠错使用
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(fragmentShader));
+        }
+        let program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        return program;
+    }
+
+
+
+</script>
+
+</html>
