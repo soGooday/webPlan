@@ -6,7 +6,7 @@ function clearUpEffect(effect) {
   //将依赖获取到
   for (let index = 0; index < deps.length; index++) {
     //清除依赖
-    delete deps[index];
+    deps[index].delete(effect);
   }
   //数组长度归0
   effect.deps.length = 0;

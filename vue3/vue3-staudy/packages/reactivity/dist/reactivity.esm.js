@@ -3,7 +3,7 @@ var activeEffect;
 function clearUpEffect(effect2) {
   let { deps } = effect2;
   for (let index = 0; index < deps.length; index++) {
-    delete deps[index];
+    deps[index].delete(effect2);
   }
   effect2.deps.length = 0;
 }
