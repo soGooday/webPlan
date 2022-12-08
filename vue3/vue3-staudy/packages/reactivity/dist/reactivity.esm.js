@@ -93,10 +93,11 @@ var mutableHandlers = {
   },
   set(target, key, value, receiver) {
     const oldValue = target[key];
+    const t = Reflect.set(target, key, value, receiver);
     if (oldValue !== value) {
       trigger(target, key, value, oldValue);
     }
-    return Reflect.set(target, key, value, receiver);
+    return t;
   }
 };
 

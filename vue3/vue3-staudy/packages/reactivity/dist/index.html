@@ -14,7 +14,7 @@
         // import { reactive, effect } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
         import { reactive, effect } from './reactivity.esm.js'
         const info = { name: 'wang', age: 18, flag: false }
-        const data = reactive(info);
+        const data = reactive({ name: 'wang', age: 18, flag: false });
         //处理reactive的对象再次被reactive
         // const data1 = reactive(data);
         // const data2 = reactive(data1);
@@ -27,9 +27,9 @@
         })
         setTimeout(() => {
             // runner()
-            data.flag = true;
+            data.flag = !data.flag;
             setTimeout(() => {
-                data.name = 'sogooday2'
+                data.age = 'sogooday2'
                 console.log('修改age')
             }, 1000)
             // data.name = 'sogooday1'

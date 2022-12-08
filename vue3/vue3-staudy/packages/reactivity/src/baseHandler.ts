@@ -17,11 +17,11 @@ export const mutableHandlers = {
   set(target, key, value, receiver) {
     //老值
     const oldValue = target[key];
+    const t = Reflect.set(target, key, value, receiver);
     //老值与新值进行对比
     if (oldValue !== value) {
       trigger(target, key, value, oldValue);
-    }
-
-    return Reflect.set(target, key, value, receiver); //处理this的指向
+    } 
+    return t; //处理this的指向
   },
 };
