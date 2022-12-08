@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { reactive, effect } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
+        import { reactive, effect } from './reactivity.esm.js'
+        const info = { name: 'wang', age: 18, flag: false }
+        const data = reactive(info);
+        //处理reactive的对象再次被reactive
+        // const data1 = reactive(data);
+        // const data2 = reactive(data1);
+        // console.log(data1 === data2)
+        // console.log('effect:', effect) 
+        const runner = effect(() => {
+            console.log('runner')
+            app.innerHTML = data.flag ? data.name : data.age
+
+        })
+        setTimeout(() => {
+            // runner()
+            data.flag = true;
+            setTimeout(() => {
+                data.name = 'sogooday2'
+                console.log('修改age')
+            }, 1000)
+            // data.name = 'sogooday1'
+        }, 1000)
+    </script>
+</body>
+
+</html>
