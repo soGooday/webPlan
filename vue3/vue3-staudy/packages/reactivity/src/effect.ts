@@ -17,8 +17,10 @@ class ReactiveEffect {
   public active = true; //是否激活
   public deps = []; //方法中有那些依赖项
   public parent = undefined;
-  constructor(fn) {
+  public scheduler = undefined;
+  constructor(fn, scheduler) {
     this.fn = fn;
+    this.scheduler = scheduler;
   }
 
   run() {
@@ -52,8 +54,8 @@ class ReactiveEffect {
   }
 }
 //依赖收集 就是当前的effect变成全局的 稍后取值的时候可以拿到这个全局的effect
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn, opention = {}) {
+  const _effect = new ReactiveEffect(fn, opention.scheduler);
   _effect.run(); //默认让响应式的走一遍
 
   const runner = _effect.run.bind(_effect); //保证runner被调取的时候 this的指向不会丢失
@@ -122,7 +124,11 @@ export function trigger(target, key, newValue, oldValue) {
       // app.inntrtHTML = data.name 触发effect的依赖收集 本句与上句进行入了死循环
       // })
       if (activeEffect != effect) {
-        effect.run(); //都会重新依赖收集
+        if (!effect.scheduler) {
+          effect.run(); //都会重新依赖收集
+        } else {
+          effect.scheduler();
+        }
       }
     });
   }

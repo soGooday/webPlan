@@ -14,7 +14,7 @@
         // import { reactive, effect } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
         import { reactive, effect } from './reactivity.esm.js'
         const info = { name: 'wang', age: 18, flag: false }
-        const data = reactive({ name: 'wang', age: 18, flag: false });
+        const data = reactive({ name: 'wang', age: 18, flag: false, n: { n: 1 } });
         //处理reactive的对象再次被reactive
         // const data1 = reactive(data);
         // const data2 = reactive(data1);
@@ -24,15 +24,25 @@
             console.log('runner')
             app.innerHTML = data.flag ? data.name : data.age
 
+        }, {//类似于watch api的回调
+            scheduler() {
+                console.log('scheduler')
+                setTimeout(() => {
+                    // console.log(this)
+                    this.run()
+                }, 1000)
+            }
         })
+        console.log(data.n)
+        // runner.effect.stop()
         setTimeout(() => {
             // runner()
             data.flag = !data.flag;
-            setTimeout(() => {
-                console.log('修改age')
-                data.age = 'sogooday2'
+            // setTimeout(() => {
+            //     console.log('修改age')
+            //     data.age = 'sogooday2'
 
-            }, 1000)
+            // }, 1000)
             // data.name = 'sogooday1'
         }, 1000)
     </script>

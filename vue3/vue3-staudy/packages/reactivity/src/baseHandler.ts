@@ -1,5 +1,6 @@
+import { isObject } from "@vue/shared";
 import { activeEffect, track, trigger } from "./effect";
-import { ReactiveFlags } from "./reactive";
+import { reactive, ReactiveFlags } from "./reactive";
 
 export const mutableHandlers = {
   //用户取值操作
@@ -11,7 +12,13 @@ export const mutableHandlers = {
     //将依赖进行收集 为effect而做的
     track(target, key);
 
-    return Reflect.get(target, key, receiver); //处理this的指向
+    let r = Reflect.get(target, key, receiver); //处理this的指向
+    //检测当前是不是obj 是的话，需要再进行一遍代理 深代理 只有被读取的时候才会进行对应的深代理
+    if (isObject(r)) {
+      return reactive(r);
+    }
+
+    return r;
   },
   //用户复制操作
   set(target, key, value, receiver) {
@@ -21,7 +28,7 @@ export const mutableHandlers = {
     //老值与新值进行对比
     if (oldValue !== value) {
       trigger(target, key, value, oldValue);
-    } 
+    }
     return t; //处理this的指向
   },
 };

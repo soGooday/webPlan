@@ -8,11 +8,13 @@ function clearUpEffect(effect2) {
   effect2.deps.length = 0;
 }
 var ReactiveEffect = class {
-  constructor(fn) {
+  constructor(fn, scheduler) {
     this.active = true;
     this.deps = [];
     this.parent = void 0;
+    this.scheduler = void 0;
     this.fn = fn;
+    this.scheduler = scheduler;
   }
   run() {
     if (!this.active) {
@@ -36,8 +38,8 @@ var ReactiveEffect = class {
     }
   }
 };
-function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+function effect(fn, opention = {}) {
+  const _effect = new ReactiveEffect(fn, opention.scheduler);
   _effect.run();
   const runner = _effect.run.bind(_effect);
   runner.effect = _effect;
@@ -71,7 +73,11 @@ function trigger(target, key, newValue, oldValue) {
     const effects = [...dep];
     effects.forEach((effect2) => {
       if (activeEffect != effect2) {
-        effect2.run();
+        if (!effect2.scheduler) {
+          effect2.run();
+        } else {
+          effect2.scheduler();
+        }
       }
     });
   }
@@ -89,7 +95,11 @@ var mutableHandlers = {
       return true;
     }
     track(target, key);
-    return Reflect.get(target, key, receiver);
+    let r = Reflect.get(target, key, receiver);
+    if (isObject(r)) {
+      return reactive(r);
+    }
+    return r;
   },
   set(target, key, value, receiver) {
     const oldValue = target[key];
