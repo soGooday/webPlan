@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { reactive, effect, computed } from '/node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
+        import { reactive, effect, computed } from './reactivity.esm.js'
+        const info = { name: 'wang', age: 18, flag: false }
+        const data = reactive({ name: 'wang', age: 18, flag: false, n: { n: 1 } });
+        //计算属性目的是为了根据状态进行衍生属性 ，这个属性有缓存功能，如果依赖的属性不发生变化就不会重新计算
+        let lstName = computed(() => {
+            console.log('computed')
+            return 'haha' + data.name;
+        })
+        effect(() => {
+            app.innerHTML = lstName.value
+        }) 
+        setTimeout(() => {
+            data.name = '- wang'
+        }, 1000)
+        /*
+        lstName.value
+        lstName.value
+        lstName.value
+        //当依赖的值发生变化后 再次取值，才会重新执行
+        setTimeout(() => {
+            data.name = 'wjf'
+            lstName.value
+        }, 1000)
+        //计算属性内部需要一个变量 这个表能量控制是否需要重新执行 dirty 默认肯定是要执行的
+        //内部默认dirty是ture，此时用户取值会执行此方法，拿到返回结果并且缓存起来，将dirty变为false
+        //从事再次取值dirty 为false 就直接去取值
+
+        //如果依赖的值发生了变化，会再次更新dirty变为true,再次取值的时候，就会执行，拿到新值
+        */
+    </script>
+</body>
+
+</html>

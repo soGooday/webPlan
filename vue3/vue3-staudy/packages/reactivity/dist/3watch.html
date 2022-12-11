@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { reactive, effect, computed, watch } from '/node_modules/vue/dist/vue.esm-browser.js'
+        import { reactive, effect, computed, watch } from './reactivity.esm.js'
+        const info = { name: 'wang', age: 18, flag: false }
+        const data = reactive({ name: 'wang', age: 18, flag: false, n: { n: 1 } });
+        //数据变化后 就调用回到方法
+        //常见两种方式 直接监控摸个对象 或者直接监控摸个属性
+        //直接监控对象 费性能
+        //watch 就是effect  会是的监听的对象依赖收集effect 属性变化后，会触发sceduler
+        watch(() => data.name, (newValue, oldValue) => {//对象是引用地址 无法区分是新的还是老的
+            console.log(newValue, oldValue)
+        }, { immediate: true })
+
+        // watch([() => data.name, () => data.age], (newValue, oldValue) => {//对象是引用地址 无法区分是新的还是老的
+        //     console.log(newValue, oldValue)
+        // })
+        data.name = 'ahah'
+        data.name = 19
+
+        //effect（三种） 组件中是渲染effect  计算属性effect  用户effect   
+    </script>
+</body>
+
+</html>

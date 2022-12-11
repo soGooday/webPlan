@@ -4,7 +4,9 @@ import { mutableHandlers } from "./baseHandler";
 export const enum ReactiveFlags {
   IS_REACTIVE = "__V_isReactive",
 }
-
+export function isReacitve(target) {
+  return !!(target && target[ReactiveFlags.IS_REACTIVE]);
+}
 const reactiveMap = new Map();
 export function reactive(target) {
   //不是对象就返回
@@ -12,7 +14,7 @@ export function reactive(target) {
   //检查是不是reactive过的对象是不是又被套了一层reactive
   if (target[ReactiveFlags.IS_REACTIVE]) {
     return target;
-  } 
+  }
   //检查知是不是存在之前的代理对象
   const exisitsProxy = reactiveMap.get(target);
   if (exisitsProxy) return exisitsProxy;

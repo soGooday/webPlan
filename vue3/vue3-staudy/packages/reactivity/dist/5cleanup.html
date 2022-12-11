@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { reactive, effect, computed, watch, watchEffect } from '/node_modules/vue/dist/vue.esm-browser.js'
+        import { reactive, effect, computed, watch, watchEffect } from './reactivity.esm.js'
+        const info = { name: 'wang', age: 18, flag: false }
+        const data = reactive({ name: 'wang', age: 18, flag: false, n: { n: 1 } });
+
+        //当数据变化后 我希望根据最新的数据，获取结果
+        //第一次 数据变化了 我会调用一个接口 getData() 2000sm->返回一个值 1
+        //第二次 数据变化了 我会调用一个接口 getData() 1000sm->返回一个值 2
+        //先渲染2 再显然1
+
+
+        //第一次的接口满 第二次的接口快  第一次会覆盖掉第二次接口数据 
+        let timer = 3000;
+        function getData(data) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    console.log(data)
+                    resolve(data)
+                }, timer -= 1000)
+            })
+        }
+        // let arr = []
+        // watch(() => data.name, async function (newValue, oldValue) {
+        //     let flag = true;
+        //     while (arr.length > 0) {
+        //         let cd = arr.shift()
+        //         cd();
+        //     }
+        //     arr.push(() => {
+        //         flag = false;
+        //     })
+        //     let r = await getData(newValue);
+        //     if (flag) {
+        //         render(r)
+        //     }
+        // })
+        //防抖 就是触发 只是用第一次
+        //节流是按照频率 一分钟值触发一次
+        let arr = []
+        watch(() => data.name, async function (newValue, oldValue, onCleanup) {
+            let flag = true; 
+            onCleanup(() => {
+                flag = false;
+            })
+            let r = await getData(newValue);
+            if (flag) {
+                render(r)
+            }
+        })
+        function render(data) {
+            app.innerHTML = data
+        }
+
+        data.name = '1';
+        data.name = '2';
+
+        //watch watchEffer oncleanup
+    </script>
+</body>
+
+</html>

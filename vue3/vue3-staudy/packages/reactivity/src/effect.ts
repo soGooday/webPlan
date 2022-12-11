@@ -12,7 +12,7 @@ function clearUpEffect(effect) {
   effect.deps.length = 0;
 }
 
-class ReactiveEffect {
+export class ReactiveEffect {
   public fn;
   public active = true; //是否激活
   public deps = []; //方法中有那些依赖项
@@ -54,7 +54,7 @@ class ReactiveEffect {
   }
 }
 //依赖收集 就是当前的effect变成全局的 稍后取值的时候可以拿到这个全局的effect
-export function effect(fn, opention = {}) {
+export function effect(fn, opention: any = {}) {
   const _effect = new ReactiveEffect(fn, opention.scheduler);
   _effect.run(); //默认让响应式的走一遍
 
@@ -85,6 +85,9 @@ export function track(target, key) {
   if (!dep) {
     depsMap.set(key, (dep = new Set()));
   }
+  trackEffect(dep);
+}
+export function trackEffect(dep) {
   //是否需要进行收集
   let shouldTrack = !dep.has(activeEffect);
   if (shouldTrack) {
@@ -112,6 +115,10 @@ export function trigger(target, key, newValue, oldValue) {
   if (!depMap) return;
   //获取target的中key的集合
   const dep = depMap.get(key);
+  triggerEffect(dep);
+}
+//触发相应
+export function triggerEffect(dep) {
   if (dep) {
     //防止出现 //解释1
     const effects = [...dep];
@@ -133,6 +140,7 @@ export function trigger(target, key, newValue, oldValue) {
     });
   }
 }
+
 //解释1
 //默认执行了一个set。在当前的set中清空了某一个effect，又向set中添加了一项  例子如下
 //使用了同一个地址

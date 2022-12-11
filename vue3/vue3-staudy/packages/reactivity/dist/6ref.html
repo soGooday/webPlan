@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { reactive, effect, computed, watch, watchEffect, ref } from '/node_modules/vue/dist/vue.esm-browser.js'
+        import { reactive, effect, computed, watch, watchEffect, ref } from './reactivity.esm.js'
+        //ref 一般处理基础类型 还有就是用于换整个对象的时候可以采用
+        //对象类型 我们一般采用reactive来处理
+        let person = reactive({ name: "wang", age: 13 })
+        const flag = ref(true);
+
+        watchEffect(() => {
+            render(flag.value ? person.name : person.age)
+        })
+
+        function render(data) {
+            app.innerHTML = data
+        }
+
+        setTimeout(() => {
+            flag.value = !flag.value;
+        }, 1000)
+
+    </script>
+</body>
+
+</html>
