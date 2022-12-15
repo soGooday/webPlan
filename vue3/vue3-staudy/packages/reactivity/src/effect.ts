@@ -1,3 +1,5 @@
+import { recordEffectScope } from "./effectScope";
+
 export let activeEffect;
 
 //清理依赖的收集
@@ -21,6 +23,7 @@ export class ReactiveEffect {
   constructor(fn, scheduler) {
     this.fn = fn;
     this.scheduler = scheduler;
+    recordEffectScope(this);
   }
 
   run() {

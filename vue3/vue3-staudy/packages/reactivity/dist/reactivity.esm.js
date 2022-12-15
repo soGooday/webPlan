@@ -1,3 +1,48 @@
+// packages/reactivity/src/effectScope.ts
+var activeEffectScope;
+var EffectScope = class {
+  constructor(detached = false) {
+    this.active = true;
+    this.effects = [];
+    if (!detached && activeEffectScope) {
+      activeEffectScope.scopes || (activeEffectScope.scopes = [].push(this));
+    }
+  }
+  run(fn) {
+    if (this.active) {
+      try {
+        this.parent = activeEffectScope;
+        activeEffectScope = this;
+        return fn();
+      } finally {
+        activeEffectScope = this.parent;
+        this.parent = null;
+      }
+    }
+  }
+  stop() {
+    if (this.active) {
+      for (let index = 0; index < this.effects.length; index++) {
+        this.effects[index].stop();
+      }
+      this.active = false;
+    }
+    if (this.scopes) {
+      for (let index = 0; index < this.scopes.length; index++) {
+        this.scopes[index].stop();
+      }
+    }
+  }
+};
+function recordEffectScope(effect2) {
+  if (activeEffectScope && activeEffectScope.active) {
+    activeEffectScope.effects.push(effect2);
+  }
+}
+function effectScope(detached) {
+  return new EffectScope(detached);
+}
+
 // packages/reactivity/src/effect.ts
 var activeEffect;
 function clearUpEffect(effect2) {
@@ -15,6 +60,7 @@ var ReactiveEffect = class {
     this.scheduler = void 0;
     this.fn = fn;
     this.scheduler = scheduler;
+    recordEffectScope(this);
   }
   run() {
     if (!this.active) {
@@ -266,15 +312,60 @@ var RefImpl = class {
     }
   }
 };
+var ObjectRefImpl = class {
+  constructor(target, key) {
+    this.__v_isRef = true;
+    this._objact = target;
+    this._key = key;
+  }
+  get value() {
+    return this._objact[this._key];
+  }
+  set value(_value) {
+    this._objact[this._key] = _value;
+  }
+};
+function toRef(target, key) {
+  return new ObjectRefImpl(target, key);
+}
+function toRefs(objact) {
+  const ret = {};
+  for (const key in objact) {
+    ret[key] = toRef(objact, key);
+  }
+  return ret;
+}
+function proxyRefs(objactWithRefs) {
+  return new Proxy(objactWithRefs, {
+    get(target, key, receiver) {
+      let v = Reflect.get(target, key, receiver);
+      return v.__v_isRef ? v.value : v;
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key];
+      if (oldValue.__v_isRef) {
+        oldValue.value = value;
+        return true;
+      }
+      return Reflect.set(target, key, value, receiver);
+    }
+  });
+}
 export {
   ReactiveEffect,
   ReactiveFlags,
   activeEffect,
+  activeEffectScope,
   computed,
   effect,
+  effectScope,
   isReacitve,
+  proxyRefs,
   reactive,
+  recordEffectScope,
   ref,
+  toRef,
+  toRefs,
   track,
   trackEffect,
   trigger,

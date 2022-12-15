@@ -34,3 +34,48 @@ class RefImpl {
     }
   }
 }
+
+class ObjectRefImpl {
+  private __v_isRef = true;
+  private _objact;
+  private _key;
+  //这里不是proxy 是Objact.defineProperty
+  constructor(target, key) {
+    this._objact = target;
+    this._key = key;
+  }
+  get value() {
+    return this._objact[this._key];
+  }
+  set value(_value) {
+    this._objact[this._key] = _value;
+  }
+}
+export function toRef(target, key) {
+  return new ObjectRefImpl(target, key);
+}
+export function toRefs(objact) {
+  const ret = {};
+
+  for (const key in objact) {
+    ret[key] = toRef(objact, key);
+  }
+  return ret;
+}
+//自动帮助.value
+export function proxyRefs(objactWithRefs) {
+  return new Proxy(objactWithRefs, {
+    get(target, key, receiver) {
+      let v = Reflect.get(target, key, receiver);
+      return v.__v_isRef ? v.value : v;
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key];
+      if (oldValue.__v_isRef) {
+        oldValue.value = value;
+        return true;
+      }
+      return Reflect.set(target, key, value, receiver);
+    },
+  });
+}
