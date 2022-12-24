@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { createRenderer, h, render } from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+        import { h, createRenderer } from "./runtime-dom.esm.js"
+        // render(h('div', h('span', 'hello world')), app) 
+        // render(h('div', 'hello world'), app)
+        // render(h('div', [h('span', '1'), h('span', '2')]), app)
+        // // render(h('div'), app)
+        // setTimeout(() => {
+        //     render(h('div', '你好 世界'), app)
+        //     // render(h('div'), app)
+        //     // render(h('div', [h('div', '1'), h('div', '2')]), app)
+        //     // render(h('div', 'hello world'), app)
+        // }, 1000)
+        // console.log('h', h, ccreateRenderer)
+        //runtime-dom 提供浏览器的api的操作方法 render默认是提供的是浏览器的  不再需要调取createRenderer 来创建自己的渲染方法了
+        //runtime-core 只是虚拟dom 会调取上层runtime-dom提供的方法
+        const { render } = createRenderer({
+            createElement(tagName) {
+                return document.createElement(tagName)
+            },
+            setElementText(el, text) {
+                el.innerHTML = text
+
+            },
+            insert(el, container) {
+                container.appendChild(el)
+            }
+        })
+        render(h('div', {}, 'hello world'), app) 
+    </script>
+</body>
+
+</html>

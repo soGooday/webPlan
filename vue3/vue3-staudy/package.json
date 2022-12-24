@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev":"node scripts/dev.js reactivity -f esm",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node scripts/dev.js runtime-dom -f esm",
+    "dev:reactivity": "node scripts/dev.js reactivity -f esm"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.15.16",
-    "0": "^1.2.7",
+    "minimist": "^1.2.7",
     "typescript": "^4.9.3"
   }
 }
