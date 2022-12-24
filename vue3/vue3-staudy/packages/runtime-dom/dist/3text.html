@@ -11,8 +11,8 @@
 <body>
     <div id="app"></div>
     <script type="module">
-        // import { createRenderer, h, render } from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
-        import { h, createRenderer, render } from "./runtime-dom.esm.js"
+        // import { createRenderer, h, render, Text，Fragment } from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+        import { h, createRenderer, render, Text, Fragment } from "./runtime-dom.esm.js"
         render(h('div', [
 
             h('li', { key: 'a' }, 'a'),
@@ -24,17 +24,12 @@
             h('li', { key: 'g' }, 'g'),
         ]), app)
         setTimeout(() => {
-            render(h('div', [
-            // a b e c d h f g
-                h('li', { key: 'a' }, 'a'),
-                h('li', { key: 'b' }, 'b'),
-                h('li', { key: 'e' }, 'e'),
-                h('li', { key: 'c' }, 'c'),
-                h('li', { key: 'd' }, 'd'),
-                h('li', { key: 'h' }, 'h'),
-                h('li', { key: 'f' }, 'f'),
-                h('li', { key: 'g' }, 'g'),
-            ]), app)
+            render(h(Fragment, [h(Text, 'text'), h('div', 'div')]), app)
+
+            setTimeout(() => {
+                // render(h(Fragment, [h(Text, 'text')]), app)
+                render((null), app)
+            }, 1000)
         }, 1000) 
     </script>
 </body>

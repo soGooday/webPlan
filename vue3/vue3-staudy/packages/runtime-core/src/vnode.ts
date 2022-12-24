@@ -1,5 +1,6 @@
 import { isArray, isString, ShapeFlags } from "packages/shared/src/index";
-
+export const Text = Symbol("text");
+export const Fragment = Symbol("Fragment");
 export function isVNode(vnode) {
   return vnode.__v__isVnode == true;
 }

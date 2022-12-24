@@ -1,5 +1,5 @@
 import { ShapeFlags } from "@vue/shared";
-import { isSameVNode } from "./vnode";
+import { Fragment, isSameVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
   const {
@@ -184,74 +184,74 @@ export function createRenderer(options) {
         unmount(c1[i]);
         i++;
       }
-    }
+    } else {
+      //老的数量小于新的
+      // a b c d e   f g
+      // a b e c d h f g   i= 2 e1 =4 e2=5
 
-    //老的数量小于新的
-    // a b c d e   f g
-    // a b e c d h f g   i= 2 e1 =4 e2=5
-
-    //转化为了
-    // c d e
-    // e c d h
-    let s1 = i;
-    let s2 = i;
-    // i=2 e1=4 e2=5;
-    //如何复用老节点
-    const keyToNewIndexMap = new Map();
-    //将新的节点中的数据保存起来
-    for (let i = s2; i <= e2; i++) {
-      const vnode = c2[i];
-      keyToNewIndexMap.set(vnode.key, i);
-    }
-    // e c d h 新的长度
-    const toBepathed = e2 - s2 + 1;
-    const newIndexToOldMapIndex = new Array(toBepathed).fill(0); //[0, 0, 0, 0];
-    //有了新的映射表后，去老的中查找一下，看看是不是选在，存在说明可以复用
-
-    for (let i = s1; i <= e1; i++) {
-      const vnode = c1[i];
-      let newIndex = keyToNewIndexMap.get(vnode.key);
-      //不存在说明老的里面没有
-      if (newIndex === undefined) {
-        //没有的话 就可以进行删除
-        unmount(vnode);
-      } else {
-        //新的中存在，就将数组中的对应位置从0 改为其对应位置上i+1 因为i有可能是0 对应的位置是老索引+1
-        newIndexToOldMapIndex[newIndex - s2] = i + 1;
-        //如果能复用就比较两个节点
-        path(vnode, c2[newIndex], el);
+      //转化为了
+      // c d e
+      // e c d h
+      let s1 = i;
+      let s2 = i;
+      // i=2 e1=4 e2=5;
+      //如何复用老节点
+      const keyToNewIndexMap = new Map();
+      //将新的节点中的数据保存起来
+      for (let i = s2; i <= e2; i++) {
+        const vnode = c2[i];
+        keyToNewIndexMap.set(vnode.key, i);
       }
-    }
-    //[5,3,4,0]
-    //[0,1,2,3]
-    //seq=[1,2]
-    //写到这里 我们已经复用了节点 并且更新的复用节点的属性，差移动操作，和新的里面有老的里面没有的操作
-    const seq = getSequence(newIndexToOldMapIndex);
-    let j = seq.length - 1;
+      // e c d h 新的长度
+      const toBepathed = e2 - s2 + 1;
+      const newIndexToOldMapIndex = new Array(toBepathed).fill(0); //[0, 0, 0, 0];
+      //有了新的映射表后，去老的中查找一下，看看是不是选在，存在说明可以复用
 
-    debugger; //a b e c d h f g
-    for (let i = toBepathed - 1; i >= 0; i--) {
-      const nextIndex = s2 + i; //下一个元素
-      const nextChild = c2[nextIndex]; //先拿到h
-
-      //看下 h 后面是否有值
-      const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
-      if (newIndexToOldMapIndex[i] == 0) {
-        //将新增的元素插到f前面
-        path(null, nextChild, el, anchor);
-      } else {
-        if (i !== seq[j]) {
-          //倒叙插入
-          hostInsert(nextChild.el, el, anchor);
+      for (let i = s1; i <= e1; i++) {
+        const vnode = c1[i];
+        let newIndex = keyToNewIndexMap.get(vnode.key);
+        //不存在说明老的里面没有
+        if (newIndex === undefined) {
+          //没有的话 就可以进行删除
+          unmount(vnode);
         } else {
-          j--; //不做移動跳過就好
+          //新的中存在，就将数组中的对应位置从0 改为其对应位置上i+1 因为i有可能是0 对应的位置是老索引+1
+          newIndexToOldMapIndex[newIndex - s2] = i + 1;
+          //如果能复用就比较两个节点
+          path(vnode, c2[newIndex], el);
         }
+      }
+      //[5,3,4,0]
+      //[0,1,2,3]
+      //seq=[1,2]
+      //写到这里 我们已经复用了节点 并且更新的复用节点的属性，差移动操作，和新的里面有老的里面没有的操作
+      const seq = getSequence(newIndexToOldMapIndex);
+      let j = seq.length - 1;
 
-        //这个插入操作比较暴力，做个一次整体的移动，但是我们需要优化不动的那一项
-        //[5,3,4,0] -》 [3,4]
-        //索引为1和2的不移动
-        //例子
-        //[2,5,8,6,7,9]  找递增序列中最长的 2 5 6 7 9 不需要连续
+      // debugger; //a b e c d h f g
+      for (let i = toBepathed - 1; i >= 0; i--) {
+        const nextIndex = s2 + i; //下一个元素
+        const nextChild = c2[nextIndex]; //先拿到h
+
+        //看下 h 后面是否有值
+        const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
+        if (newIndexToOldMapIndex[i] == 0) {
+          //将新增的元素插到f前面
+          path(null, nextChild, el, anchor);
+        } else {
+          if (i !== seq[j]) {
+            //倒叙插入
+            hostInsert(nextChild.el, el, anchor);
+          } else {
+            j--; //不做移動跳過就好
+          }
+
+          //这个插入操作比较暴力，做个一次整体的移动，但是我们需要优化不动的那一项
+          //[5,3,4,0] -》 [3,4]
+          //索引为1和2的不移动
+          //例子
+          //[2,5,8,6,7,9]  找递增序列中最长的 2 5 6 7 9 不需要连续
+        }
       }
     }
   };
@@ -355,7 +355,31 @@ export function createRenderer(options) {
     }
   };
   /**
-   * 开始diff算法
+   * 對文本的處理
+   * @param n1
+   * @param n2
+   * @param container
+   */
+  const processText = (n1, n2, el) => {
+    if (n1 == null) {
+      hostInsert((n2.el = hostCreateText(n2.children)), el);
+    } else {
+      let el = (n2.el = n1.el);
+      if (n1.children !== n2.children) {
+        //更新文本
+        hostSetText(el, n2.children);
+      }
+    }
+  };
+  const processFragment = (n1, n2, el) => {
+    if (n1 == null) {
+      mountChildren(n2.children, el);
+    } else {
+      pathKeyChildren(n1.children, n2.children, el);
+    }
+  };
+  /**
+   * 开始diff算法 每增加一个类型 就要考虑 初始化 更新 删除
    * @param n1 老节点
    * @param n2 新节点
    * @param container 节点挂载容器
@@ -372,10 +396,26 @@ export function createRenderer(options) {
       //n1 置空
       n1 = null;
     }
-    //对节点的处理
-    processElement(n1, n2, container, anchor);
+    let { shapeFlage, type } = n2;
+    switch (type) {
+      case Text:
+        processText(n1, n2, container);
+        break;
+      case Fragment:
+        processFragment(n1, n2, container);
+      default:
+        if (shapeFlage & ShapeFlags.ELEMENT) {
+          //对节点的处理
+          processElement(n1, n2, container, anchor);
+        }
+    }
   };
-  const unmount = (vnode) => hostRemove(vnode.el);
+  const unmount = (vnode) => {
+    if (vnode.type === Fragment) {
+      return unmountChildren(vnode.children);
+    }
+    hostRemove(vnode.el);
+  };
   /**
    * 虚拟渲染节点
    * @param vnode  虚拟节点
