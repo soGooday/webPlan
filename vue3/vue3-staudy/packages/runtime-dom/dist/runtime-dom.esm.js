@@ -111,6 +111,8 @@ function isString(value) {
   return typeof value === "string";
 }
 var isArray = Array.isArray;
+var ownProperty = Object.prototype.hasOwnProperty;
+var hasOwn = (key, value) => ownProperty.call(value, key);
 
 // packages/runtime-core/src/vnode.ts
 var Text = Symbol("text");
@@ -122,7 +124,7 @@ function isSameVNode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
 function createVNode(type, props = null, children = null) {
-  const shapeFlage = isString(type) ? 1 /* ELEMENT */ : 0;
+  const shapeFlage = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 6 /* COMPONENT */ : 0;
   const vnode = {
     __v__isVnode: true,
     type,
@@ -165,6 +167,179 @@ function h(type, propsOrChildren, children) {
     return createVNode(type, propsOrChildren, children);
   }
 }
+
+// packages/reactivity/src/effectScope.ts
+var activeEffectScope;
+function recordEffectScope(effect) {
+  if (activeEffectScope && activeEffectScope.active) {
+    activeEffectScope.effects.push(effect);
+  }
+}
+
+// packages/reactivity/src/effect.ts
+var activeEffect;
+function clearUpEffect(effect) {
+  let { deps } = effect;
+  for (let index = 0; index < deps.length; index++) {
+    deps[index].delete(effect);
+  }
+  effect.deps.length = 0;
+}
+var ReactiveEffect = class {
+  constructor(fn, scheduler) {
+    this.active = true;
+    this.deps = [];
+    this.parent = void 0;
+    this.scheduler = void 0;
+    this.fn = fn;
+    this.scheduler = scheduler;
+    recordEffectScope(this);
+  }
+  run() {
+    if (!this.active) {
+      return this.fn();
+    }
+    try {
+      this.parent = activeEffect;
+      activeEffect = this;
+      clearUpEffect(this);
+      return this.fn();
+    } finally {
+      activeEffect = this.parent;
+      this.parent = void 0;
+    }
+  }
+  stop() {
+    if (this.active) {
+      clearUpEffect(this);
+      this.active = false;
+      console.log("\u6E05\u9664\u662F\u6709\u7684");
+    }
+  }
+};
+var targetMap = /* @__PURE__ */ new WeakMap();
+function track(target, key) {
+  if (!activeEffect) {
+    return;
+  }
+  let depsMap = targetMap.get(target);
+  if (!depsMap) {
+    targetMap.set(target, depsMap = /* @__PURE__ */ new Map());
+  }
+  let dep = depsMap.get(key);
+  if (!dep) {
+    depsMap.set(key, dep = /* @__PURE__ */ new Set());
+  }
+  trackEffect(dep);
+}
+function trackEffect(dep) {
+  let shouldTrack = !dep.has(activeEffect);
+  if (shouldTrack) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
+  }
+}
+function trigger(target, key, newValue, oldValue) {
+  const depMap = targetMap.get(target);
+  if (!depMap)
+    return;
+  const dep = depMap.get(key);
+  triggerEffect(dep);
+}
+function triggerEffect(dep) {
+  if (dep) {
+    const effects = [...dep];
+    effects.forEach((effect) => {
+      if (activeEffect != effect) {
+        if (!effect.scheduler) {
+          effect.run();
+        } else {
+          effect.scheduler();
+        }
+      }
+    });
+  }
+}
+
+// packages/reactivity/src/baseHandler.ts
+var mutableHandlers = {
+  get(target, key, receiver) {
+    if ("__V_isReactive" /* IS_REACTIVE */ == key) {
+      return true;
+    }
+    track(target, key);
+    let r = Reflect.get(target, key, receiver);
+    if (isObject(r)) {
+      return reactive(r);
+    }
+    return r;
+  },
+  set(target, key, value, receiver) {
+    const oldValue = target[key];
+    const t = Reflect.set(target, key, value, receiver);
+    if (oldValue !== value) {
+      trigger(target, key, value, oldValue);
+    }
+    return t;
+  }
+};
+
+// packages/reactivity/src/reactive.ts
+var reactiveMap = /* @__PURE__ */ new Map();
+function reactive(target) {
+  if (!isObject(target))
+    return target;
+  if (target["__V_isReactive" /* IS_REACTIVE */]) {
+    return target;
+  }
+  const exisitsProxy = reactiveMap.get(target);
+  if (exisitsProxy)
+    return exisitsProxy;
+  const proxy = new Proxy(target, mutableHandlers);
+  reactiveMap.set(target, proxy);
+  return proxy;
+}
+
+// packages/runtime-core/src/componentProps.ts
+function initProps(instance, rawProps) {
+  const props = {};
+  const attrs = {};
+  const options = instance.propsOptions;
+  if (rawProps) {
+    for (const key in rawProps) {
+      const value = rawProps[key];
+      if (key in options) {
+        props[key] = value;
+      } else {
+        attrs[key] = value;
+      }
+    }
+  }
+  instance.props = reactive(props);
+  instance.attrs = attrs;
+}
+
+// packages/runtime-core/src/scheduler.ts
+var queue = [];
+var isFlushing = false;
+var resolvePromise = Promise.resolve();
+var queueJob = (job) => {
+  if (!queue.includes(job)) {
+    queue.push(job);
+  }
+  if (!isFlushing) {
+    isFlushing = true;
+    resolvePromise.then(() => {
+      isFlushing = false;
+      let copy = queue.slice(0);
+      queue.length = 0;
+      for (let index = 0; index < copy.length; index++) {
+        const job2 = copy[index];
+        job2();
+      }
+    });
+  }
+};
 
 // packages/runtime-core/src/renderer.ts
 function createRenderer(options) {
@@ -360,6 +535,74 @@ function createRenderer(options) {
       pathKeyChildren(n1.children, n2.children, el);
     }
   };
+  const mountComponent = (vnode, container, anchor = null) => {
+    console.log("vnode.type:", vnode.type);
+    const { data = () => ({}), render: render3, props: propsOptions = {} } = vnode.type;
+    const state = reactive(data());
+    const instance = {
+      data: state,
+      isMounted: false,
+      subTree: null,
+      vnode,
+      update: null,
+      props: {},
+      attrs: {},
+      propsOptions,
+      proxy: null
+    };
+    vnode.component = instance;
+    initProps(instance, vnode.props);
+    const publicProperties = {
+      $attrs: (i) => i.attrs,
+      $props: (i) => i.props
+    };
+    instance.proxy = new Proxy(instance, {
+      get(target, key) {
+        let { data: data2, props } = target;
+        if (hasOwn(key, data2)) {
+          return data2[key];
+        } else if (hasOwn(key, props)) {
+          return props[key];
+        }
+        let getter = publicProperties[key];
+        if (getter) {
+          return getter(target);
+        }
+      },
+      set(target, key, value) {
+        let { data: data2, props } = target;
+        if (hasOwn(key, data2)) {
+          data2[key] = value;
+        } else if (hasOwn(key, props)) {
+          return false;
+        }
+        return true;
+      }
+    });
+    const componentFun = () => {
+      if (!instance.isMounted) {
+        const subTree = render3.call(instance.proxy);
+        path(null, subTree, container, anchor);
+        instance.subTree = subTree;
+        instance.isMounted = true;
+      } else {
+        const subTree = render3.call(instance.proxy);
+        path(instance.subTree, subTree, container, anchor);
+        instance.subTree = subTree;
+      }
+    };
+    const effect = new ReactiveEffect(componentFun, () => {
+      queueJob(instance.update);
+    });
+    let update = instance.update = effect.run.bind(effect);
+    update();
+  };
+  const processComponent = (n1, n2, container, anchor = null) => {
+    if (n1 == null) {
+      mountComponent(n2, container, anchor);
+    } else {
+    }
+  };
   const path = (n1, n2, container, anchor = null) => {
     if (n1 == n2) {
       return;
@@ -378,6 +621,8 @@ function createRenderer(options) {
       default:
         if (shapeFlage & 1 /* ELEMENT */) {
           processElement(n1, n2, container, anchor);
+        } else if (shapeFlage & 6 /* COMPONENT */) {
+          processComponent(n1, n2, container, anchor);
         }
     }
   };

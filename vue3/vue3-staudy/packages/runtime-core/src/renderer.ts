@@ -1,4 +1,7 @@
-import { ShapeFlags } from "@vue/shared";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
+import { hasOwn, ShapeFlags } from "@vue/shared";
+import { initProps } from "./componentProps";
+import { queueJob } from "./scheduler";
 import { Fragment, isSameVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -378,6 +381,84 @@ export function createRenderer(options) {
       pathKeyChildren(n1.children, n2.children, el);
     }
   };
+  const mountComponent = (vnode, container, anchor = null) => {
+    //如何挂载节点 vnode指代的是组件的虚拟节点  subTree render函数返回的虚拟节点
+    // debugger;
+    console.log('vnode.type:',vnode.type)
+    const { data = () => ({}), render, props: propsOptions = {} } = vnode.type;
+    const state = reactive(data());
+    //组件实例
+    const instance = {
+      data: state,
+      isMounted: false,
+      subTree: null,
+      vnode,
+      update: null, //组件的更新方法
+      props: {},
+      attrs: {},
+      propsOptions,
+      proxy: null,
+    };
+    vnode.component = instance; //让虚拟节点知道对应的组件
+    //instance.propsOptions 用户接受了那些属性列表
+    initProps(instance, vnode.props);
+    const publicProperties = {
+      $attrs: (i) => i.attrs,
+      $props: (i) => i.props,
+    };
+    instance.proxy = new Proxy(instance, {
+      get(target, key) {
+        let { data, props } = target;
+        if (hasOwn(key, data)) {
+          return data[key];
+        } else if (hasOwn(key, props)) {
+          return props[key];
+        }
+        let getter = publicProperties[key];
+        if (getter) {
+          return getter(target);
+        }
+      },
+      set(target, key, value) {
+        let { data, props } = target;
+        if (hasOwn(key, data)) {
+          data[key] = value;
+        } else if (hasOwn(key, props)) {
+          return false;
+        }
+        return true;
+      },
+    });
+    const componentFun = () => {
+      if (!instance.isMounted) {
+        //第一次挂载
+        const subTree = render.call(instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
+        path(null, subTree, container, anchor);
+        instance.subTree = subTree; //第一渲染产生的vnode
+        instance.isMounted = true;
+      } else {
+        //后续组件更新
+        const subTree = render.call(instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
+        path(instance.subTree, subTree, container, anchor); //将第一次的更新节点与本次的节点对比更新起来
+        instance.subTree = subTree; //将本次的虚拟节点收集起来，下次对比使用
+      }
+    };
+    const effect = new ReactiveEffect(componentFun, () => {
+      //异步更新
+      queueJob(instance.update);
+    });
+    //更新方法
+    let update = (instance.update = effect.run.bind(effect));
+    update();
+  };
+  const processComponent = (n1, n2, container, anchor = null) => {
+    if (n1 == null) {
+      //组件创建
+      mountComponent(n2, container, anchor);
+    } else {
+      //组件更新  指代组件行书 插槽更新
+    }
+  };
   /**
    * 开始diff算法 每增加一个类型 就要考虑 初始化 更新 删除
    * @param n1 老节点
@@ -407,13 +488,17 @@ export function createRenderer(options) {
         if (shapeFlage & ShapeFlags.ELEMENT) {
           //对节点的处理
           processElement(n1, n2, container, anchor);
+        } else if (shapeFlage & ShapeFlags.COMPONENT) {
+          processComponent(n1, n2, container, anchor);
         }
     }
   };
   const unmount = (vnode) => {
+    //碎片节点 直接删除子节点
     if (vnode.type === Fragment) {
       return unmountChildren(vnode.children);
     }
+    //正常的节点删除当前的节点就行
     hostRemove(vnode.el);
   };
   /**

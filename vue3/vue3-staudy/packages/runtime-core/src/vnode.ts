@@ -1,4 +1,9 @@
-import { isArray, isString, ShapeFlags } from "packages/shared/src/index";
+import {
+  isArray,
+  isObject,
+  isString,
+  ShapeFlags,
+} from "packages/shared/src/index";
 export const Text = Symbol("text");
 export const Fragment = Symbol("Fragment");
 export function isVNode(vnode) {
@@ -24,7 +29,11 @@ export function createVNode(type, props = null, children = null) {
   //用标识来区分 对应的虚拟节点类型，这表示采用位运算的方式 方便组合
 
   //type 是字符串的话  就说明是节点属性
-  const shapeFlage = isString(type) ? ShapeFlags.ELEMENT : 0;
+  const shapeFlage = isString(type)
+    ? ShapeFlags.ELEMENT
+    : isObject(type)
+    ? ShapeFlags.COMPONENT
+    : 0;
 
   //虚拟节点对应真是节点
   const vnode = {

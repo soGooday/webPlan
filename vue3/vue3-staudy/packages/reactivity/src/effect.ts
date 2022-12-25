@@ -20,7 +20,7 @@ export class ReactiveEffect {
   public deps = []; //方法中有那些依赖项
   public parent = undefined;
   public scheduler = undefined;
-  constructor(fn, scheduler) {
+  constructor(fn, scheduler?) {
     this.fn = fn;
     this.scheduler = scheduler;
     recordEffectScope(this);
