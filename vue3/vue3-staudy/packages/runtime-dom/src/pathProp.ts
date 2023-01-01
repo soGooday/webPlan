@@ -13,7 +13,7 @@ export const pathchProp = (el, key, prevValue, nextVlue) => {
     //{color:'red',fontSize:12}{color:'red'}
     //style
     patchStyle(el, prevValue, nextVlue);
-  } else if (/^on[A-Z]/.test(key)) {
+  } else if (/^on[A-Za-z]/.test(key)) { 
     //event
     //事件操作 ？ addEventListener : removeEventListener
     // @click="fn1" @click="fn2"

@@ -1,5 +1,6 @@
 import { reactive, ReactiveEffect } from "@vue/reactivity";
 import { hasOwn, ShapeFlags } from "@vue/shared";
+import { createComponentInstance, setupComponent } from "./component";
 import { initProps } from "./componentProps";
 import { queueJob } from "./scheduler";
 import { Fragment, isSameVNode, Text } from "./vnode";
@@ -384,51 +385,35 @@ export function createRenderer(options) {
   const mountComponent = (vnode, container, anchor = null) => {
     //如何挂载节点 vnode指代的是组件的虚拟节点  subTree render函数返回的虚拟节点
     // debugger;
-    console.log('vnode.type:',vnode.type)
-    const { data = () => ({}), render, props: propsOptions = {} } = vnode.type;
-    const state = reactive(data());
-    //组件实例
-    const instance = {
-      data: state,
-      isMounted: false,
-      subTree: null,
-      vnode,
-      update: null, //组件的更新方法
-      props: {},
-      attrs: {},
-      propsOptions,
-      proxy: null,
-    };
-    vnode.component = instance; //让虚拟节点知道对应的组件
-    //instance.propsOptions 用户接受了那些属性列表
-    initProps(instance, vnode.props);
-    const publicProperties = {
-      $attrs: (i) => i.attrs,
-      $props: (i) => i.props,
-    };
-    instance.proxy = new Proxy(instance, {
-      get(target, key) {
-        let { data, props } = target;
-        if (hasOwn(key, data)) {
-          return data[key];
-        } else if (hasOwn(key, props)) {
-          return props[key];
-        }
-        let getter = publicProperties[key];
-        if (getter) {
-          return getter(target);
-        }
-      },
-      set(target, key, value) {
-        let { data, props } = target;
-        if (hasOwn(key, data)) {
-          data[key] = value;
-        } else if (hasOwn(key, props)) {
-          return false;
-        }
-        return true;
-      },
-    });
+    // console.log("vnode.type:", vnode.type);
+    // const state = reactive(data());
+    //创建实例
+    const instance = (vnode.component = createComponentInstance(vnode)); //让虚拟节点知道对应的组件
+    //给实例赋值
+    setupComponent(instance);
+    //创建组件的effect
+    setupRenderEffect(instance, container, anchor);
+  };
+  const updateProps = (prevProps, nextProps) => {
+    for (const key in nextProps) { 
+      prevProps[key] = nextProps[key];
+    }
+    for (const key in prevProps) { 
+      if (!(key in nextProps)) {
+        delete prevProps[key];
+      }
+    }
+  };
+  const updateComponentPreRender = (instance, next) => {
+    instance.next = null;
+    instance.vnode = next;
+    debugger
+    //属性更新
+    updateProps(instance.props, next.props);
+    //插槽更新
+  };
+  const setupRenderEffect = (instance, container, anchor) => {
+    let { render } = instance;
     const componentFun = () => {
       if (!instance.isMounted) {
         //第一次挂载
@@ -437,12 +422,19 @@ export function createRenderer(options) {
         instance.subTree = subTree; //第一渲染产生的vnode
         instance.isMounted = true;
       } else {
+        // debugger;
+        // let { next } = instance;
+        if (instance.next) {
+          debugger;
+          updateComponentPreRender(instance, instance.next);
+        } 
         //后续组件更新
         const subTree = render.call(instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
         path(instance.subTree, subTree, container, anchor); //将第一次的更新节点与本次的节点对比更新起来
         instance.subTree = subTree; //将本次的虚拟节点收集起来，下次对比使用
       }
     };
+
     const effect = new ReactiveEffect(componentFun, () => {
       //异步更新
       queueJob(instance.update);
@@ -451,12 +443,43 @@ export function createRenderer(options) {
     let update = (instance.update = effect.run.bind(effect));
     update();
   };
+  const hasPropsChange = (prevProps = {}, nextvProps = {}) => {
+    let l1 = Object.keys(prevProps);
+    let l2 = Object.keys(nextvProps);
+    if (l1.length !== l2.length) return true;
+    for (let index = 0; index < l1.length; index++) {
+      const key = l2[index];
+      if (prevProps[key] !== nextvProps[key]) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const shouldCompontUpdate = (n1, n2) => {
+    const { props: prevProps, children: prevChilder } = n1;
+    const { props: nextvProps, children: nextChilder } = n2;
+    if (prevChilder || nextChilder) return true;
+    if (prevProps === nextvProps) return false;
+    return hasPropsChange(prevProps, nextvProps);
+  };
+  const updateComonent = (n1, n2) => {
+    //复用组件
+    let instance = (n2.component = n1.component);
+    //对比属性与插槽 是不是需要进行更新
+    if (shouldCompontUpdate(n1, n2)) {
+      debugger;
+      instance.next = n2;
+      instance && instance.update();
+    }
+  };
   const processComponent = (n1, n2, container, anchor = null) => {
     if (n1 == null) {
       //组件创建
       mountComponent(n2, container, anchor);
     } else {
       //组件更新  指代组件行书 插槽更新
+      debugger;
+      updateComonent(n1, n2);
     }
   };
   /**
@@ -507,6 +530,8 @@ export function createRenderer(options) {
    * @param container 节点挂载容器
    */
   const render = (vnode, container) => {
+    debugger
+    console.log(1)
     //检测传递回来的vnode是null 就说明是卸载
     if (vnode == null) {
       //只有之前使用的渲染的方法，才能进行卸载，要不然无法卸载
@@ -579,5 +604,5 @@ function getSequence(arr) {
 
   return result;
 }
-let result = getSequence([2, 5, 8, 4, 6, 7, 9, 3]);
-console.log(result);
+// let result = getSequence([2, 5, 8, 4, 6, 7, 9, 3]);
+// console.log(result);

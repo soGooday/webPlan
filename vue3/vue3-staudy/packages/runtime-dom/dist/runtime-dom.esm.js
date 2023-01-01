@@ -53,8 +53,9 @@ var patchClass = (el, value) => {
 
 // packages/runtime-dom/src/modules/event.ts
 function createInvoker(iniriaValue) {
-  const invoker = () => invoker.value;
+  const invoker = () => invoker.value();
   invoker.value = iniriaValue;
+  console.log(invoker.value);
   return invoker;
 }
 function patchEvent(el, key, nextdVlue) {
@@ -63,11 +64,15 @@ function patchEvent(el, key, nextdVlue) {
   const exisitingInvoker = invokers[eventName];
   if (nextdVlue && exisitingInvoker) {
     exisitingInvoker.value = nextdVlue;
+    console.log("EVENT1:", el, key, nextdVlue);
   } else {
     if (nextdVlue) {
+      console.log("EVENT2:", el, key, nextdVlue);
       const invoker = invokers[eventName] = createInvoker(nextdVlue);
       el.addEventListener(eventName, invoker);
+      console.log("onclick:", invoker, invokers[eventName]);
     } else if (exisitingInvoker) {
+      console.log("EVENT3:", el, key, nextdVlue);
       el.removeEventListener(eventName, exisitingInvoker);
       invokers[eventName] = null;
     }
@@ -96,7 +101,7 @@ var pathchProp = (el, key, prevValue, nextVlue) => {
     patchClass(el, nextVlue);
   } else if (key === "style") {
     patchStyle(el, prevValue, nextVlue);
-  } else if (/^on[A-Z]/.test(key)) {
+  } else if (/^on[A-Za-z]/.test(key)) {
     patchEvent(el, key, nextVlue);
   } else {
     patchAttr(el, key, nextVlue);
@@ -106,6 +111,9 @@ var pathchProp = (el, key, prevValue, nextVlue) => {
 // packages/shared/src/index.ts
 function isObject(value) {
   return value !== null && typeof value === "object";
+}
+function isFunticon(value) {
+  return typeof value === "function";
 }
 function isString(value) {
   return typeof value === "string";
@@ -317,6 +325,61 @@ function initProps(instance, rawProps) {
   }
   instance.props = reactive(props);
   instance.attrs = attrs;
+}
+
+// packages/runtime-core/src/component.ts
+function createComponentInstance(vnode) {
+  const instance = {
+    data: null,
+    isMounted: false,
+    subTree: null,
+    vnode,
+    update: null,
+    props: {},
+    attrs: {},
+    propsOptions: vnode.type.props || {},
+    proxy: null
+  };
+  return instance;
+}
+var publicProperties = {
+  $attrs: (i) => i.attrs,
+  $props: (i) => i.props
+};
+var PublicInstancePropxyHandlers = {
+  get(target, key) {
+    let { data, props } = target;
+    if (data && hasOwn(key, data)) {
+      return data[key];
+    } else if (hasOwn(key, props)) {
+      return props[key];
+    }
+    let getter = publicProperties[key];
+    if (getter) {
+      return getter(target);
+    }
+  },
+  set(target, key, value) {
+    let { data, props } = target;
+    if (hasOwn(key, data)) {
+      data[key] = value;
+    } else if (hasOwn(key, props)) {
+      return false;
+    }
+    return true;
+  }
+};
+function setupComponent(instance) {
+  const { type, props } = instance.vnode;
+  initProps(instance, props);
+  instance.proxy = new Proxy(instance, PublicInstancePropxyHandlers);
+  let { data } = type;
+  if (data) {
+    if (isFunticon(data)) {
+      instance.data = reactive(data.call(instance.proxy));
+    }
+  }
+  instance.render = type.render;
 }
 
 // packages/runtime-core/src/scheduler.ts
@@ -536,49 +599,28 @@ function createRenderer(options) {
     }
   };
   const mountComponent = (vnode, container, anchor = null) => {
-    console.log("vnode.type:", vnode.type);
-    const { data = () => ({}), render: render3, props: propsOptions = {} } = vnode.type;
-    const state = reactive(data());
-    const instance = {
-      data: state,
-      isMounted: false,
-      subTree: null,
-      vnode,
-      update: null,
-      props: {},
-      attrs: {},
-      propsOptions,
-      proxy: null
-    };
-    vnode.component = instance;
-    initProps(instance, vnode.props);
-    const publicProperties = {
-      $attrs: (i) => i.attrs,
-      $props: (i) => i.props
-    };
-    instance.proxy = new Proxy(instance, {
-      get(target, key) {
-        let { data: data2, props } = target;
-        if (hasOwn(key, data2)) {
-          return data2[key];
-        } else if (hasOwn(key, props)) {
-          return props[key];
-        }
-        let getter = publicProperties[key];
-        if (getter) {
-          return getter(target);
-        }
-      },
-      set(target, key, value) {
-        let { data: data2, props } = target;
-        if (hasOwn(key, data2)) {
-          data2[key] = value;
-        } else if (hasOwn(key, props)) {
-          return false;
-        }
-        return true;
+    const instance = vnode.component = createComponentInstance(vnode);
+    setupComponent(instance);
+    setupRenderEffect(instance, container, anchor);
+  };
+  const updateProps = (prevProps, nextProps) => {
+    for (const key in nextProps) {
+      prevProps[key] = nextProps[key];
+    }
+    for (const key in prevProps) {
+      if (!(key in nextProps)) {
+        delete prevProps[key];
       }
-    });
+    }
+  };
+  const updateComponentPreRender = (instance, next) => {
+    instance.next = null;
+    instance.vnode = next;
+    debugger;
+    updateProps(instance.props, next.props);
+  };
+  const setupRenderEffect = (instance, container, anchor) => {
+    let { render: render3 } = instance;
     const componentFun = () => {
       if (!instance.isMounted) {
         const subTree = render3.call(instance.proxy);
@@ -586,6 +628,10 @@ function createRenderer(options) {
         instance.subTree = subTree;
         instance.isMounted = true;
       } else {
+        if (instance.next) {
+          debugger;
+          updateComponentPreRender(instance, instance.next);
+        }
         const subTree = render3.call(instance.proxy);
         path(instance.subTree, subTree, container, anchor);
         instance.subTree = subTree;
@@ -597,10 +643,42 @@ function createRenderer(options) {
     let update = instance.update = effect.run.bind(effect);
     update();
   };
+  const hasPropsChange = (prevProps = {}, nextvProps = {}) => {
+    let l1 = Object.keys(prevProps);
+    let l2 = Object.keys(nextvProps);
+    if (l1.length !== l2.length)
+      return true;
+    for (let index = 0; index < l1.length; index++) {
+      const key = l2[index];
+      if (prevProps[key] !== nextvProps[key]) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const shouldCompontUpdate = (n1, n2) => {
+    const { props: prevProps, children: prevChilder } = n1;
+    const { props: nextvProps, children: nextChilder } = n2;
+    if (prevChilder || nextChilder)
+      return true;
+    if (prevProps === nextvProps)
+      return false;
+    return hasPropsChange(prevProps, nextvProps);
+  };
+  const updateComonent = (n1, n2) => {
+    let instance = n2.component = n1.component;
+    if (shouldCompontUpdate(n1, n2)) {
+      debugger;
+      instance.next = n2;
+      instance && instance.update();
+    }
+  };
   const processComponent = (n1, n2, container, anchor = null) => {
     if (n1 == null) {
       mountComponent(n2, container, anchor);
     } else {
+      debugger;
+      updateComonent(n1, n2);
     }
   };
   const path = (n1, n2, container, anchor = null) => {
@@ -633,6 +711,8 @@ function createRenderer(options) {
     hostRemove(vnode.el);
   };
   const render2 = (vnode, container) => {
+    debugger;
+    console.log(1);
     if (vnode == null) {
       if (container._vnode) {
         unmount(container._vnode);
@@ -648,7 +728,7 @@ function createRenderer(options) {
 }
 function getSequence(arr) {
   let len = arr.length;
-  let result2 = [0];
+  let result = [0];
   let resultLastIndex;
   let start;
   let end;
@@ -657,38 +737,36 @@ function getSequence(arr) {
   for (let i2 = 0; i2 < arr.length; i2++) {
     const arrI = arr[i2];
     if (arrI !== 0) {
-      resultLastIndex = result2[result2.length - 1];
+      resultLastIndex = result[result.length - 1];
       if (arr[resultLastIndex] < arrI) {
-        result2.push(i2);
+        result.push(i2);
         p[i2] = resultLastIndex;
         continue;
       }
       start = 0;
-      end = result2.length - 1;
+      end = result.length - 1;
       while (start < end) {
         middle = (start + end) / 2 | 0;
-        if (arr[result2[middle]] < arrI) {
+        if (arr[result[middle]] < arrI) {
           start = middle + 1;
         } else {
           end = middle;
         }
       }
-      if (arrI < arr[result2[start]]) {
-        p[i2] = result2[start - 1];
-        result2[start] = i2;
+      if (arrI < arr[result[start]]) {
+        p[i2] = result[start - 1];
+        result[start] = i2;
       }
     }
   }
-  let i = result2.length;
-  let last = result2[i - 1];
+  let i = result.length;
+  let last = result[i - 1];
   while (i-- > 0) {
-    result2[i] = last;
+    result[i] = last;
     last = p[last];
   }
-  return result2;
+  return result;
 }
-var result = getSequence([2, 5, 8, 4, 6, 7, 9, 3]);
-console.log(result);
 
 // packages/runtime-dom/src/index.ts
 var renderOptions = Object.assign(nodeOps, { pathchProp });

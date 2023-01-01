@@ -17,6 +17,8 @@
         const ChildComponent = {
             props: { a: String },
             render() {
+                
+                console.log('this.a:',this.a)
                 return h(Text, this.a)
             }
         }
@@ -27,9 +29,11 @@
             },
             render() {
                 return h(Fragment, [
-                    h('button', {
+                    h('span', {
                         onClick: () => {
+                            console.log('this.isShow：', this.isShow)
                             this.isShow = !this.isShow
+
                         }
                     }, '点我修改状态'),
                     h(ChildComponent, { a: this.isShow ? '显示' : "隐藏" })
