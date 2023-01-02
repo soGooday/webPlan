@@ -5,14 +5,16 @@ import { reactive } from "./reactive";
 export function ref(value) {
   return new RefImpl(value);
 }
-
+export function isRef(value) { 
+  return !!(value && value.__v_isRef);
+}
 function toReactive(value) {
   return isObject(value) ? reactive(value) : value;
 }
 class RefImpl {
   public dep = undefined;
   public _value;
-  public _v_isRef = true;
+  public __v_isRef = true;
   constructor(public rawValue) {
     this._value = toReactive(rawValue);
   }
@@ -67,11 +69,13 @@ export function proxyRefs(objactWithRefs) {
   return new Proxy(objactWithRefs, {
     get(target, key, receiver) {
       let v = Reflect.get(target, key, receiver);
-      return v.__v_isRef ? v.value : v;
+      console.log("v :", isRef(v), v);
+      return isRef(v) ? v.value : v;
     },
     set(target, key, value, receiver) {
       const oldValue = target[key];
-      if (oldValue.__v_isRef) {
+      // if (oldValue.__v_isRef) {
+      if (isRef(oldValue)) {
         oldValue.value = value;
         return true;
       }

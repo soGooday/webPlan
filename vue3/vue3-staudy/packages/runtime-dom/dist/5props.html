@@ -16,8 +16,7 @@
 
         const ChildComponent = {
             props: { a: String },
-            render() {
-                
+            render() { 
                 console.log('this.a:',this.a)
                 return h(Text, this.a)
             }
@@ -29,7 +28,7 @@
             },
             render() {
                 return h(Fragment, [
-                    h('span', {
+                    h('button', {
                         onClick: () => {
                             console.log('this.isShow：', this.isShow)
                             this.isShow = !this.isShow

@@ -1,6 +1,7 @@
 import { isObject } from "@vue/shared";
-import { activeEffect, track, trigger } from "./effect";
+import { track, trigger } from "./effect";
 import { reactive, ReactiveFlags } from "./reactive";
+import { isRef } from "./ref";
 
 export const mutableHandlers = {
   //用户取值操作
@@ -13,6 +14,11 @@ export const mutableHandlers = {
     track(target, key);
 
     let r = Reflect.get(target, key, receiver); //处理this的指向
+
+    if (isRef(r)) {
+      console.log("r:", r);
+      return r.value;
+    }
     //检测当前是不是obj 是的话，需要再进行一遍代理 深代理 只有被读取的时候才会进行对应的深代理
     if (isObject(r)) {
       return reactive(r);

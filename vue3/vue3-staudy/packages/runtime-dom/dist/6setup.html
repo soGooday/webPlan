@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { createRenderer, h, render, Text, Fragment ,ref} from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+        import { h, createRenderer, render, Text, Fragment, ref, toRefs, reactive } from "./runtime-dom.esm.js"
+
+
+        const VueComponent = {
+            props: {
+                a: String
+            },
+            setup(props, ctx) {
+                const name = ref('wf');
+                const age = ref(18);
+                const status = reactive({ class: '1356班' })
+                const handleClick = () => {
+                    ctx.emit('myEvent')
+                }
+                return {
+                    ...toRefs(status),
+                    handleClick
+                }
+                // return { name, age, ...toRefs(status) }
+                // return function () {
+                //     return h("div", name.value + age.value)
+                // }
+            },
+            render(proxy) {
+                console.log('proxy:', proxy)
+                // return h("div", proxy.name + proxy.age + proxy.class)
+                return h(Fragment, [
+                    h('div', proxy.class),
+                    h('button', { onClick: proxy.handleClick }, '触发')
+                ])
+            }
+        }
+        render(h(VueComponent, {
+            a: 1, b: 2, onMyEvent: () => {
+                alert('啊哈哈')
+            }
+        }, { default: () => h('div', 'hello') }), app)
+    </script>
+</body>
+
+</html>

@@ -395,10 +395,10 @@ export function createRenderer(options) {
     setupRenderEffect(instance, container, anchor);
   };
   const updateProps = (prevProps, nextProps) => {
-    for (const key in nextProps) { 
+    for (const key in nextProps) {
       prevProps[key] = nextProps[key];
     }
-    for (const key in prevProps) { 
+    for (const key in prevProps) {
       if (!(key in nextProps)) {
         delete prevProps[key];
       }
@@ -407,7 +407,7 @@ export function createRenderer(options) {
   const updateComponentPreRender = (instance, next) => {
     instance.next = null;
     instance.vnode = next;
-    debugger
+    // debugger
     //属性更新
     updateProps(instance.props, next.props);
     //插槽更新
@@ -417,7 +417,7 @@ export function createRenderer(options) {
     const componentFun = () => {
       if (!instance.isMounted) {
         //第一次挂载
-        const subTree = render.call(instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
+        const subTree = render.call(instance.proxy, instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
         path(null, subTree, container, anchor);
         instance.subTree = subTree; //第一渲染产生的vnode
         instance.isMounted = true;
@@ -425,11 +425,10 @@ export function createRenderer(options) {
         // debugger;
         // let { next } = instance;
         if (instance.next) {
-          debugger;
           updateComponentPreRender(instance, instance.next);
-        } 
+        }
         //后续组件更新
-        const subTree = render.call(instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
+        const subTree = render.call(instance.proxy, instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
         path(instance.subTree, subTree, container, anchor); //将第一次的更新节点与本次的节点对比更新起来
         instance.subTree = subTree; //将本次的虚拟节点收集起来，下次对比使用
       }
@@ -467,7 +466,7 @@ export function createRenderer(options) {
     let instance = (n2.component = n1.component);
     //对比属性与插槽 是不是需要进行更新
     if (shouldCompontUpdate(n1, n2)) {
-      debugger;
+      // debugger;
       instance.next = n2;
       instance && instance.update();
     }
@@ -478,7 +477,7 @@ export function createRenderer(options) {
       mountComponent(n2, container, anchor);
     } else {
       //组件更新  指代组件行书 插槽更新
-      debugger;
+      // debugger;
       updateComonent(n1, n2);
     }
   };
@@ -530,8 +529,6 @@ export function createRenderer(options) {
    * @param container 节点挂载容器
    */
   const render = (vnode, container) => {
-    debugger
-    console.log(1)
     //检测传递回来的vnode是null 就说明是卸载
     if (vnode == null) {
       //只有之前使用的渲染的方法，才能进行卸载，要不然无法卸载

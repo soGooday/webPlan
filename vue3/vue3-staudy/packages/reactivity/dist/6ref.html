@@ -20,11 +20,15 @@
         // let name = toRef(person, 'name')
         // let age = toRef(person, 'age')
         // let { name, age } = toRefs(person)
-
+        let r1 = ref('wang')
+        let r2 = ref(13)
+        let darar = proxyRefs(toRefs(reactive({ r1, r2 })))
+        console.log('darar:', darar.r1)
         let personRefs = toRefs(person);
         watchEffect(() => {
             //将toRefs是装包 而proxyRefs是拆包
             let { name, age } = proxyRefs(personRefs)
+            console.log(name, age)
             // render(flag.value ? age.value : name.value) zhufengpeixun wekeupmypig
             render(flag.value ? name : age)
         })

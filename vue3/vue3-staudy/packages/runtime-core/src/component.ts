@@ -1,5 +1,5 @@
-import { reactive } from "@vue/reactivity";
-import { hasOwn, isFunticon } from "@vue/shared";
+import { proxyRefs, reactive, toRefs } from "@vue/reactivity";
+import { hasOwn, isFunticon, ShapeFlags } from "@vue/shared";
 import { initProps } from "./componentProps";
 
 export function createComponentInstance(vnode) {
@@ -14,20 +14,26 @@ export function createComponentInstance(vnode) {
     attrs: {},
     propsOptions: vnode.type.props || {},
     proxy: null,
+    setupState: null,
+    exposed: {},
+    slots: {},
   };
   return instance;
 }
 const publicProperties = {
   $attrs: (i) => i.attrs,
   $props: (i) => i.props,
+  $slots: (i) => i.slots,
 };
 const PublicInstancePropxyHandlers = {
   get(target, key) {
-    let { data, props } = target;
+    let { data, props, setupState } = target;
     if (data && hasOwn(key, data)) {
       return data[key];
     } else if (hasOwn(key, props)) {
       return props[key];
+    } else if (setupState && hasOwn(key, setupState)) {
+      return setupState[key];
     }
     let getter = publicProperties[key];
     if (getter) {
@@ -35,22 +41,55 @@ const PublicInstancePropxyHandlers = {
     }
   },
   set(target, key, value) {
-    let { data, props } = target;
+    let { data, props, setupState } = target;
     if (hasOwn(key, data)) {
       data[key] = value;
     } else if (hasOwn(key, props)) {
       return false;
+    } else if (setupState && hasOwn(key, setupState)) {
+      setupState[key] = value;
     }
     return true;
   },
 };
+function initSlots(instance, children) {
+  let { vnode } = instance;
+  if (vnode.shapeFlage && ShapeFlags.SLOTS_CHILDREN) {
+    instance.slots = children; //将用户的插槽绑定到实例上
+  }
+}
 export function setupComponent(instance) {
-  const { type, props } = instance.vnode;
+  const { type, props, children } = instance.vnode;
   //把用户传递props 解析成为attrs 和 propsOptions 放到实例上
   initProps(instance, props);
+  initSlots(instance, children);
   //创建代理对象
   instance.proxy = new Proxy(instance, PublicInstancePropxyHandlers);
-  let { data } = type;
+  let { data, setup } = type;
+  if (setup) {
+    const setupContext = {
+      attrs: instance.attrs,
+      emit: (event, ...args) => {
+        const eventName = `on${event[0].toUpperCase()}${event.slice(1)}`;
+        const handler = instance.vnode.props[eventName];
+        console.log("instance:", instance);
+        handler && handler(...args);
+      },
+      expose(exposed) {
+        instance.exposed = exposed;
+      },
+      slots: instance.slots,
+    };
+    const setupResult = setup(instance.props, setupContext);
+    //説明seetup返回的是render函数
+    if (isFunticon(setupResult)) {
+      instance.render = setupResult;
+    } else {
+      //将返回结果作为了数据源
+      instance.setupState = proxyRefs(setupResult);
+    }
+  }
+
   if (data) {
     //vue2的传递data
     if (isFunticon(data)) {
@@ -58,6 +97,7 @@ export function setupComponent(instance) {
       instance.data = reactive(data.call(instance.proxy));
     }
   }
-
-  instance.render = type.render;
+  if (!instance.render) {
+    instance.render = type.render;
+  }
 }

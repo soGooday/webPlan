@@ -146,6 +146,8 @@ function createVNode(type, props = null, children = null) {
     let type2 = 0;
     if (isArray(children)) {
       type2 = 16 /* ARRAY_CHILDREN */;
+    } else if (isObject(children)) {
+      type2 = 32 /* SLOTS_CHILDREN */;
     } else {
       type2 = 8 /* TEXT_CHILDREN */;
     }
@@ -178,20 +180,57 @@ function h(type, propsOrChildren, children) {
 
 // packages/reactivity/src/effectScope.ts
 var activeEffectScope;
-function recordEffectScope(effect) {
-  if (activeEffectScope && activeEffectScope.active) {
-    activeEffectScope.effects.push(effect);
+var EffectScope = class {
+  constructor(detached = false) {
+    this.active = true;
+    this.effects = [];
+    if (!detached && activeEffectScope) {
+      activeEffectScope.scopes || (activeEffectScope.scopes = [].push(this));
+    }
   }
+  run(fn) {
+    if (this.active) {
+      try {
+        this.parent = activeEffectScope;
+        activeEffectScope = this;
+        return fn();
+      } finally {
+        activeEffectScope = this.parent;
+        this.parent = null;
+      }
+    }
+  }
+  stop() {
+    if (this.active) {
+      for (let index = 0; index < this.effects.length; index++) {
+        this.effects[index].stop();
+      }
+      this.active = false;
+    }
+    if (this.scopes) {
+      for (let index = 0; index < this.scopes.length; index++) {
+        this.scopes[index].stop();
+      }
+    }
+  }
+};
+function recordEffectScope(effect2) {
+  if (activeEffectScope && activeEffectScope.active) {
+    activeEffectScope.effects.push(effect2);
+  }
+}
+function effectScope(detached) {
+  return new EffectScope(detached);
 }
 
 // packages/reactivity/src/effect.ts
 var activeEffect;
-function clearUpEffect(effect) {
-  let { deps } = effect;
+function clearUpEffect(effect2) {
+  let { deps } = effect2;
   for (let index = 0; index < deps.length; index++) {
-    deps[index].delete(effect);
+    deps[index].delete(effect2);
   }
-  effect.deps.length = 0;
+  effect2.deps.length = 0;
 }
 var ReactiveEffect = class {
   constructor(fn, scheduler) {
@@ -225,6 +264,13 @@ var ReactiveEffect = class {
     }
   }
 };
+function effect(fn, opention = {}) {
+  const _effect = new ReactiveEffect(fn, opention.scheduler);
+  _effect.run();
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
+}
 var targetMap = /* @__PURE__ */ new WeakMap();
 function track(target, key) {
   if (!activeEffect) {
@@ -257,16 +303,88 @@ function trigger(target, key, newValue, oldValue) {
 function triggerEffect(dep) {
   if (dep) {
     const effects = [...dep];
-    effects.forEach((effect) => {
-      if (activeEffect != effect) {
-        if (!effect.scheduler) {
-          effect.run();
+    effects.forEach((effect2) => {
+      if (activeEffect != effect2) {
+        if (!effect2.scheduler) {
+          effect2.run();
         } else {
-          effect.scheduler();
+          effect2.scheduler();
         }
       }
     });
   }
+}
+
+// packages/reactivity/src/ref.ts
+function ref(value) {
+  return new RefImpl(value);
+}
+function isRef(value) {
+  return !!(value && value.__v_isRef);
+}
+function toReactive(value) {
+  return isObject(value) ? reactive(value) : value;
+}
+var RefImpl = class {
+  constructor(rawValue) {
+    this.rawValue = rawValue;
+    this.dep = void 0;
+    this.__v_isRef = true;
+    this._value = toReactive(rawValue);
+  }
+  get value() {
+    if (activeEffect) {
+      trackEffect(this.dep || (this.dep = /* @__PURE__ */ new Set()));
+    }
+    return this._value;
+  }
+  set value(newValue) {
+    if (newValue != this._value) {
+      this._value = toReactive(newValue);
+      this.rawValue = newValue;
+      triggerEffect(this.dep);
+    }
+  }
+};
+var ObjectRefImpl = class {
+  constructor(target, key) {
+    this.__v_isRef = true;
+    this._objact = target;
+    this._key = key;
+  }
+  get value() {
+    return this._objact[this._key];
+  }
+  set value(_value) {
+    this._objact[this._key] = _value;
+  }
+};
+function toRef(target, key) {
+  return new ObjectRefImpl(target, key);
+}
+function toRefs(objact) {
+  const ret = {};
+  for (const key in objact) {
+    ret[key] = toRef(objact, key);
+  }
+  return ret;
+}
+function proxyRefs(objactWithRefs) {
+  return new Proxy(objactWithRefs, {
+    get(target, key, receiver) {
+      let v = Reflect.get(target, key, receiver);
+      console.log("v :", isRef(v), v);
+      return isRef(v) ? v.value : v;
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key];
+      if (isRef(oldValue)) {
+        oldValue.value = value;
+        return true;
+      }
+      return Reflect.set(target, key, value, receiver);
+    }
+  });
 }
 
 // packages/reactivity/src/baseHandler.ts
@@ -277,6 +395,10 @@ var mutableHandlers = {
     }
     track(target, key);
     let r = Reflect.get(target, key, receiver);
+    if (isRef(r)) {
+      console.log("r:", r);
+      return r.value;
+    }
     if (isObject(r)) {
       return reactive(r);
     }
@@ -293,6 +415,13 @@ var mutableHandlers = {
 };
 
 // packages/reactivity/src/reactive.ts
+var ReactiveFlags = /* @__PURE__ */ ((ReactiveFlags2) => {
+  ReactiveFlags2["IS_REACTIVE"] = "__V_isReactive";
+  return ReactiveFlags2;
+})(ReactiveFlags || {});
+function isReacitve(target) {
+  return !!(target && target["__V_isReactive" /* IS_REACTIVE */]);
+}
 var reactiveMap = /* @__PURE__ */ new Map();
 function reactive(target) {
   if (!isObject(target))
@@ -306,6 +435,101 @@ function reactive(target) {
   const proxy = new Proxy(target, mutableHandlers);
   reactiveMap.set(target, proxy);
   return proxy;
+}
+
+// packages/reactivity/src/computed.ts
+var noop = () => {
+};
+var ComputedRefImpl = class {
+  constructor(getter, setter) {
+    this.effect = void 0;
+    this.__v_isRef = true;
+    this._diry = true;
+    this._value = "";
+    this.getter = getter;
+    this.setter = setter;
+    this.effect = new ReactiveEffect(getter, () => {
+      this._diry = true;
+      triggerEffect(this.dep);
+    });
+  }
+  get value() {
+    if (activeEffect) {
+      trackEffect(this.dep || (this.dep = /* @__PURE__ */ new Set()));
+    }
+    if (this._diry) {
+      this._value = this.effect.run();
+      this._diry = false;
+    }
+    return this._value;
+  }
+  set value(newValue) {
+    this.setter(newValue);
+  }
+};
+function computed(getterOrOpentions) {
+  let onlayGetter = isFunticon(getterOrOpentions);
+  let getter;
+  let setter;
+  if (onlayGetter) {
+    getter = getterOrOpentions;
+    setter = noop;
+  } else {
+    getter = getterOrOpentions.get;
+    setter = getterOrOpentions.set || noop;
+  }
+  return new ComputedRefImpl(getter, setter);
+}
+
+// packages/reactivity/src/watch.ts
+function traverse(source, set = /* @__PURE__ */ new Set()) {
+  if (!isObject(source)) {
+    return source;
+  }
+  if (set.has(source)) {
+    return source;
+  }
+  set.add(source);
+  for (const key in source) {
+    traverse(source[key], set);
+  }
+  return source;
+}
+function doWatch(source, cd, options) {
+  let getter;
+  if (isReacitve(source)) {
+    getter = () => traverse(source);
+  } else if (isFunticon(source)) {
+    getter = source;
+  }
+  let oldValue;
+  let cleanup;
+  const onCleanup = (userCd) => {
+    cleanup = userCd;
+  };
+  const job = () => {
+    if (cd) {
+      let newValue = effect2.run();
+      if (cleanup)
+        cleanup();
+      if (cd)
+        cd(newValue, oldValue, onCleanup);
+      oldValue = newValue;
+    } else {
+      effect2.run();
+    }
+  };
+  const effect2 = new ReactiveEffect(getter, job);
+  if (options == null ? void 0 : options.immediate) {
+    return job();
+  }
+  oldValue = effect2.run();
+}
+function watch(source, cd, options) {
+  doWatch(source, cd, options);
+}
+function watchEffect(effect2, cd, options) {
+  doWatch(effect2, null, options);
 }
 
 // packages/runtime-core/src/componentProps.ts
@@ -338,21 +562,27 @@ function createComponentInstance(vnode) {
     props: {},
     attrs: {},
     propsOptions: vnode.type.props || {},
-    proxy: null
+    proxy: null,
+    setupState: null,
+    exposed: {},
+    slots: {}
   };
   return instance;
 }
 var publicProperties = {
   $attrs: (i) => i.attrs,
-  $props: (i) => i.props
+  $props: (i) => i.props,
+  $slots: (i) => i.slots
 };
 var PublicInstancePropxyHandlers = {
   get(target, key) {
-    let { data, props } = target;
+    let { data, props, setupState } = target;
     if (data && hasOwn(key, data)) {
       return data[key];
     } else if (hasOwn(key, props)) {
       return props[key];
+    } else if (setupState && hasOwn(key, setupState)) {
+      return setupState[key];
     }
     let getter = publicProperties[key];
     if (getter) {
@@ -360,26 +590,58 @@ var PublicInstancePropxyHandlers = {
     }
   },
   set(target, key, value) {
-    let { data, props } = target;
+    let { data, props, setupState } = target;
     if (hasOwn(key, data)) {
       data[key] = value;
     } else if (hasOwn(key, props)) {
       return false;
+    } else if (setupState && hasOwn(key, setupState)) {
+      setupState[key] = value;
     }
     return true;
   }
 };
+function initSlots(instance, children) {
+  let { vnode } = instance;
+  if (vnode.shapeFlage && 32 /* SLOTS_CHILDREN */) {
+    instance.slots = children;
+  }
+}
 function setupComponent(instance) {
-  const { type, props } = instance.vnode;
+  const { type, props, children } = instance.vnode;
   initProps(instance, props);
+  initSlots(instance, children);
   instance.proxy = new Proxy(instance, PublicInstancePropxyHandlers);
-  let { data } = type;
+  let { data, setup } = type;
+  if (setup) {
+    const setupContext = {
+      attrs: instance.attrs,
+      emit: (event, ...args) => {
+        const eventName = `on${event[0].toUpperCase()}${event.slice(1)}`;
+        const handler = instance.vnode.props[eventName];
+        console.log("instance:", instance);
+        handler && handler(...args);
+      },
+      expose(exposed) {
+        instance.exposed = exposed;
+      },
+      slots: instance.slots
+    };
+    const setupResult = setup(instance.props, setupContext);
+    if (isFunticon(setupResult)) {
+      instance.render = setupResult;
+    } else {
+      instance.setupState = proxyRefs(setupResult);
+    }
+  }
   if (data) {
     if (isFunticon(data)) {
       instance.data = reactive(data.call(instance.proxy));
     }
   }
-  instance.render = type.render;
+  if (!instance.render) {
+    instance.render = type.render;
+  }
 }
 
 // packages/runtime-core/src/scheduler.ts
@@ -616,31 +878,29 @@ function createRenderer(options) {
   const updateComponentPreRender = (instance, next) => {
     instance.next = null;
     instance.vnode = next;
-    debugger;
     updateProps(instance.props, next.props);
   };
   const setupRenderEffect = (instance, container, anchor) => {
     let { render: render3 } = instance;
     const componentFun = () => {
       if (!instance.isMounted) {
-        const subTree = render3.call(instance.proxy);
+        const subTree = render3.call(instance.proxy, instance.proxy);
         path(null, subTree, container, anchor);
         instance.subTree = subTree;
         instance.isMounted = true;
       } else {
         if (instance.next) {
-          debugger;
           updateComponentPreRender(instance, instance.next);
         }
-        const subTree = render3.call(instance.proxy);
+        const subTree = render3.call(instance.proxy, instance.proxy);
         path(instance.subTree, subTree, container, anchor);
         instance.subTree = subTree;
       }
     };
-    const effect = new ReactiveEffect(componentFun, () => {
+    const effect2 = new ReactiveEffect(componentFun, () => {
       queueJob(instance.update);
     });
-    let update = instance.update = effect.run.bind(effect);
+    let update = instance.update = effect2.run.bind(effect2);
     update();
   };
   const hasPropsChange = (prevProps = {}, nextvProps = {}) => {
@@ -668,7 +928,6 @@ function createRenderer(options) {
   const updateComonent = (n1, n2) => {
     let instance = n2.component = n1.component;
     if (shouldCompontUpdate(n1, n2)) {
-      debugger;
       instance.next = n2;
       instance && instance.update();
     }
@@ -677,7 +936,6 @@ function createRenderer(options) {
     if (n1 == null) {
       mountComponent(n2, container, anchor);
     } else {
-      debugger;
       updateComonent(n1, n2);
     }
   };
@@ -711,8 +969,6 @@ function createRenderer(options) {
     hostRemove(vnode.el);
   };
   const render2 = (vnode, container) => {
-    debugger;
-    console.log(1);
     if (vnode == null) {
       if (container._vnode) {
         unmount(container._vnode);
@@ -776,12 +1032,33 @@ var render = (vnode, container) => {
 };
 export {
   Fragment,
+  ReactiveEffect,
+  ReactiveFlags,
   Text,
+  activeEffect,
+  activeEffectScope,
+  computed,
   createRenderer,
   createVNode,
+  effect,
+  effectScope,
   h,
+  isReacitve,
+  isRef,
   isSameVNode,
   isVNode,
-  render
+  proxyRefs,
+  reactive,
+  recordEffectScope,
+  ref,
+  render,
+  toRef,
+  toRefs,
+  track,
+  trackEffect,
+  trigger,
+  triggerEffect,
+  watch,
+  watchEffect
 };
 //# sourceMappingURL=runtime-dom.esm.js.map

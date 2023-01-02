@@ -17,8 +17,6 @@
 
 // export * from "@vue/runtime-core";
 
-
-
 // 对元素可以进行节点操作
 import { nodeOps } from "./nodeOps";
 import { pathchProp } from "./pathProp";
@@ -37,3 +35,4 @@ export const render = (vnode, container) => {
 // export const warn = () => {};
 
 export * from "@vue/runtime-core";
+export * from "@vue/reactivity";

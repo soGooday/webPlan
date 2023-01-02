@@ -52,6 +52,9 @@ export function createVNode(type, props = null, children = null) {
       //children可能是两种情况数组[vnode,'test',...]或者字符串'text'
       //数组
       type = ShapeFlags.ARRAY_CHILDREN;
+    } else if (isObject(children)) {
+      //插槽
+      type = ShapeFlags.SLOTS_CHILDREN; //孩子是插槽
     } else {
       //文本
       type = ShapeFlags.TEXT_CHILDREN;
