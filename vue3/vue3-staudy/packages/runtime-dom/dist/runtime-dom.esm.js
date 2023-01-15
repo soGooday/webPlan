@@ -121,6 +121,11 @@ function isString(value) {
 var isArray = Array.isArray;
 var ownProperty = Object.prototype.hasOwnProperty;
 var hasOwn = (key, value) => ownProperty.call(value, key);
+function invokeArrayFn(fns) {
+  fns.forEach((fn) => {
+    fn();
+  });
+}
 
 // packages/runtime-core/src/vnode.ts
 var Text = Symbol("text");
@@ -552,6 +557,13 @@ function initProps(instance, rawProps) {
 }
 
 // packages/runtime-core/src/component.ts
+var currentInstance;
+function setCurrentInstance(instance) {
+  currentInstance = instance;
+}
+function getCurrentInstance() {
+  return currentInstance;
+}
 function createComponentInstance(vnode) {
   const instance = {
     data: null,
@@ -627,7 +639,9 @@ function setupComponent(instance) {
       },
       slots: instance.slots
     };
+    setCurrentInstance(instance);
     const setupResult = setup(instance.props, setupContext);
+    setCurrentInstance(null);
     if (isFunticon(setupResult)) {
       instance.render = setupResult;
     } else {
@@ -879,22 +893,37 @@ function createRenderer(options) {
     instance.next = null;
     instance.vnode = next;
     updateProps(instance.props, next.props);
+    instance.slots = next.children;
   };
   const setupRenderEffect = (instance, container, anchor) => {
     let { render: render3 } = instance;
     const componentFun = () => {
+      const { bm, m } = instance;
       if (!instance.isMounted) {
+        if (bm) {
+          invokeArrayFn(bm);
+        }
         const subTree = render3.call(instance.proxy, instance.proxy);
         path(null, subTree, container, anchor);
         instance.subTree = subTree;
         instance.isMounted = true;
+        if (m) {
+          invokeArrayFn(m);
+        }
       } else {
-        if (instance.next) {
-          updateComponentPreRender(instance, instance.next);
+        let { next, bu, u } = instance;
+        if (next) {
+          updateComponentPreRender(instance, next);
+        }
+        if (bu) {
+          invokeArrayFn(bu);
         }
         const subTree = render3.call(instance.proxy, instance.proxy);
         path(instance.subTree, subTree, container, anchor);
         instance.subTree = subTree;
+        if (u) {
+          invokeArrayFn(u);
+        }
       }
     };
     const effect2 = new ReactiveEffect(componentFun, () => {
@@ -1024,6 +1053,33 @@ function getSequence(arr) {
   return result;
 }
 
+// packages/runtime-core/src/apiLifecycle.ts
+var LifecycleHoos = /* @__PURE__ */ ((LifecycleHoos2) => {
+  LifecycleHoos2["BERFOR_MONUT"] = "bm";
+  LifecycleHoos2["MOUNTED"] = "m";
+  LifecycleHoos2["BEFORE_UPDSTE"] = "bu";
+  LifecycleHoos2["UPDATED"] = "u";
+  return LifecycleHoos2;
+})(LifecycleHoos || {});
+function createHook(type) {
+  return (hook, target = getCurrentInstance()) => {
+    if (target) {
+      const wrapperHool = () => {
+        setCurrentInstance(target);
+        hook();
+        setCurrentInstance(null);
+      };
+      const hooks = target[type] || (target[type] = []);
+      hooks.push(wrapperHool);
+    }
+    console.log("target:", target);
+  };
+}
+var onBerforMount = createHook("bm" /* BERFOR_MONUT */);
+var onMounted = createHook("m" /* MOUNTED */);
+var onBerforUpdate = createHook("bu" /* BEFORE_UPDSTE */);
+var onUpdated = createHook("u" /* UPDATED */);
+
 // packages/runtime-dom/src/index.ts
 var renderOptions = Object.assign(nodeOps, { pathchProp });
 console.log(renderOptions);
@@ -1032,26 +1088,36 @@ var render = (vnode, container) => {
 };
 export {
   Fragment,
+  LifecycleHoos,
   ReactiveEffect,
   ReactiveFlags,
   Text,
   activeEffect,
   activeEffectScope,
   computed,
+  createComponentInstance,
   createRenderer,
   createVNode,
+  currentInstance,
   effect,
   effectScope,
+  getCurrentInstance,
   h,
   isReacitve,
   isRef,
   isSameVNode,
   isVNode,
+  onBerforMount,
+  onBerforUpdate,
+  onMounted,
+  onUpdated,
   proxyRefs,
   reactive,
   recordEffectScope,
   ref,
   render,
+  setCurrentInstance,
+  setupComponent,
   toRef,
   toRefs,
   track,

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { getCurrentInstance, createRenderer, h, render, Text, Fragment, ref } from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+        import { h, createRenderer, render, Text, Fragment, ref, toRefs, reactive, getCurrentInstance, onMounted } from "./runtime-dom.esm.js"
+
+        //生命周期
+        // setup onBeforeMount onMounted onBeforeUpodate onUpdated onBeforeunmount onUnmounted
+        const VueComponent = {
+            // beforeCreate() { },
+            // created() { },
+            // beforeMount() { },
+            // mounted() { },
+
+            setup() {
+                const instance = getCurrentInstance();//这些方法 要将instance 和 mounted关联起来
+                onMounted(() => {
+                    console.log('onMounted:')
+                })
+                return () => {
+                    return h('div', 'hello world')
+                }
+            }
+        }
+        //这个实现的方案是 依赖收集
+        //1) 在setup没执行之前，我往当前的实例放在全局上
+        //2) 调用setup的时候， 内部调用的狗子就可以找到当前的实例，把实例收集起来
+        //3）setup执行完毕后 将当前的实例还原 
+        render(h(VueComponent, {}), app)
+    </script>
+</body>
+
+</html>

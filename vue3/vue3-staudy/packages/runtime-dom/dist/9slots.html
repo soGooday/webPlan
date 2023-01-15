@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        // import { createRenderer, h, render, Text, Fragment ,ref} from '/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+        import { h, createRenderer, render, Text, Fragment, ref, toRefs, reactive } from "./runtime-dom.esm.js"
+
+
+        const VueComponent = {
+            render() {
+                return h(Fragment, [
+                    this.$slots.header(),
+                    this.$slots.footer()
+                ])
+            }
+
+        }
+        render(h(VueComponent, null, { header: () => h('div', 'hello'), footer: () => h('div', 'world') }), app)
+
+        setTimeout(() => {
+            render(h(VueComponent, null, { header: () => h('div', 'new hello'), footer: () => h('div', 'new world') }), app)
+
+        }, 1000)
+    </script>
+</body>
+
+</html>

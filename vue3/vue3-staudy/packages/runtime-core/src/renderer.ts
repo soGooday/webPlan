@@ -1,5 +1,5 @@
 import { reactive, ReactiveEffect } from "@vue/reactivity";
-import { hasOwn, ShapeFlags } from "@vue/shared";
+import { hasOwn, invokeArrayFn, ShapeFlags } from "@vue/shared";
 import { createComponentInstance, setupComponent } from "./component";
 import { initProps } from "./componentProps";
 import { queueJob } from "./scheduler";
@@ -411,26 +411,44 @@ export function createRenderer(options) {
     //属性更新
     updateProps(instance.props, next.props);
     //插槽更新
+    instance.slots = next.children; //将slote更新
+    // Object.assign(instance.slots, next.children);
   };
   const setupRenderEffect = (instance, container, anchor) => {
     let { render } = instance;
     const componentFun = () => {
+      const { bm, m } = instance;
       if (!instance.isMounted) {
+        //如果存在挂在前钩子的数组
+        if (bm) {
+          invokeArrayFn(bm);
+        }
         //第一次挂载
         const subTree = render.call(instance.proxy, instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
         path(null, subTree, container, anchor);
         instance.subTree = subTree; //第一渲染产生的vnode
         instance.isMounted = true;
+
+        if (m) {
+          invokeArrayFn(m);
+        }
       } else {
         // debugger;
-        // let { next } = instance;
-        if (instance.next) {
-          updateComponentPreRender(instance, instance.next);
+        let { next, bu, u } = instance;
+        if (next) {
+          updateComponentPreRender(instance, next);
+        }
+        if (bu) {
+          invokeArrayFn(bu);
         }
         //后续组件更新
         const subTree = render.call(instance.proxy, instance.proxy); //这里会做依赖收集 数据发生变化会再次调用effect
         path(instance.subTree, subTree, container, anchor); //将第一次的更新节点与本次的节点对比更新起来
         instance.subTree = subTree; //将本次的虚拟节点收集起来，下次对比使用
+
+        if (u) {
+          invokeArrayFn(u);
+        }
       }
     };
 

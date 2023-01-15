@@ -2,6 +2,16 @@ import { proxyRefs, reactive, toRefs } from "@vue/reactivity";
 import { hasOwn, isFunticon, ShapeFlags } from "@vue/shared";
 import { initProps } from "./componentProps";
 
+export let currentInstance; //当前执行的实例
+export function setCurrentInstance(instance) {
+  //track
+  currentInstance = instance;
+}
+//给用户在setup中使用的
+export function getCurrentInstance() {
+  return currentInstance;
+}
+
 export function createComponentInstance(vnode) {
   //组件实例
   const instance = {
@@ -80,7 +90,9 @@ export function setupComponent(instance) {
       },
       slots: instance.slots,
     };
+    setCurrentInstance(instance);
     const setupResult = setup(instance.props, setupContext);
+    setCurrentInstance(null);
     //説明seetup返回的是render函数
     if (isFunticon(setupResult)) {
       instance.render = setupResult;
