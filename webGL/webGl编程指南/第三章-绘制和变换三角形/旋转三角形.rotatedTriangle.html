@@ -10,6 +10,7 @@
 
 <body>
     <h3>可以按下按键ADSW</h3>
+    <p>旋转的角度：<span id="num"></span></p>
     <canvas id='canvas'></canvas>
     <script>
         let canvas = document.getElementById('canvas');
@@ -32,15 +33,22 @@
             }
         `
 
+        // 创建顶点着色器
         let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        // 设置着色器源代码
         gl.shaderSource(vertexShader, vertexShaderSource)
+        // 编译着色器
         gl.compileShader(vertexShader)
 
+        // 创建着片元色器
         let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        // 设置着色器源代码
         gl.shaderSource(fragmentShader, fragmentShaderSouce)
+        // 编译着色器
         gl.compileShader(fragmentShader)
         //创建渲染程序
         let program = gl.createProgram();
+        // 把顶点着色器添加到渲染程序
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
@@ -48,21 +56,31 @@
         gl.useProgram(program)
 
 
-
+        //检测着色器链接是否正确
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(program);
         } 
+        //x抽的旋转角度
         let rotateX = 0.0;
+        //y轴的旋转角度
         let rotateY = 0;
-        let positonArray = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
+        //三角的三个顶点的坐标位置
+        let positonArray = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
+        // 获取顶点着色器的变量
         let a_Position = gl.getAttribLocation(program, 'a_Position');
+        // 获取旋转角度的变量
         let u_CosB = gl.getUniformLocation(program, 'u_CosB')
         let u_SinB = gl.getUniformLocation(program, 'u_SinB')
- 
+        
+        // 创建缓冲区
         let buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        //将缓冲区对象绑定到目标
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        //向缓冲区写入数据
         gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW)
+        //将缓冲区对象绑定到目标
         gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+        // 启用变量a_Position
         gl.enableVertexAttribArray(a_Position);
 
   
@@ -73,10 +91,16 @@
 
 
         const render = function () {
-            gl.uniform1f(u_CosB, Math.cos(Math.PI*rotateX/180.0))
-            gl.uniform1f(u_SinB, Math.sin(Math.PI*rotateX/180.0))
+            //赋值x角度
+            gl.uniform1f(u_CosB, Math.cos(Math.PI*rotateX/180.0));
+            //赋值y角度
+            gl.uniform1f(u_SinB, Math.sin(Math.PI*rotateX/180.0));
+            // 清空画布
             gl.clear(gl.COLOR_BUFFER_BIT);
+            // 绘制三角形
             gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+            setNumer()
         }
         render()
 
@@ -116,6 +140,10 @@
             }
 
         }
+        function setNumer (){
+           let text = document.getElementById('num');
+           text.innerText = `rotateX:${ rotateX}`
+        } 
 
 
     </script>

@@ -9,7 +9,8 @@
 </head>
 
 <body>
-    <h3>可以按下按键ADSW</h3>
+    <h3>可以按下按键ADSW移动图形</h3>
+    <p><span id="num"></span></p>
     <canvas id='canvas'></canvas>
     <script>
         let canvas = document.getElementById('canvas');
@@ -28,51 +29,74 @@
                 gl_FragColor = vec4(1.0,0.0,0.0,1.0);
             }
         `
-
+        // 创建着色器
         let vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vertexShader, vertexShaderSource)
+        // 设置着色器源代码
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        // 编译着色器
         gl.compileShader(vertexShader)
 
+        // 创建片段着色器
         let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, fragmentShaderSouce)
+        // 设置片段着色器源代码
+        gl.shaderSource(fragmentShader, fragmentShaderSouce);
+        //  编译片段着色器
         gl.compileShader(fragmentShader)
-        //创建渲染程序
+        // 创建渲染程序
         let program = gl.createProgram();
+        // 附着顶点着色器和片段着色器到渲染程序
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
+        // 链接渲染程序
         gl.linkProgram(program);
         //使用当前渲染程序
         gl.useProgram(program)
 
 
-
+        //检测上述定点片源着色器链接是否正确
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(program);
         }
+        // x移动的增加量
         let translationX = 0.0;
+        // y移动的增加量
         let translationY = 0.0;
+        // 绘制三角形的顶点
         let positonArray = new Float32Array([1.0, 0.0, -1.0, 0.0, 0.0, -1.0])
+        // 获取顶点着色器中的a_Position变量
         let a_Position = gl.getAttribLocation(program, 'a_Position');
-        let u_Translation = gl.getUniformLocation(program, 'u_Translation')
+        //获取顶点着色器中的u_Translation变量
+        let u_Translation = gl.getUniformLocation(program, 'u_Translation');
+        //创建缓冲区对象
         let buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+        //将缓冲区对象绑定到目标
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        //  向缓冲区对象写入数据
+        gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW);
+        //  将缓冲区对象分配给a_Position变量
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+        //  启用顶点位置的顶点着色器变量
         gl.enableVertexAttribArray(a_Position);
 
   
 
         //绘制
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-     
-
-
+     a
         const render = function () {
+            // 设置xy的移动增加的量
             gl.uniform2f(u_Translation, translationX, translationY)
+            // 清除颜色缓冲区
             gl.clear(gl.COLOR_BUFFER_BIT);
+            // 绘制三角形
             gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+            setNumer();
+
+
         }
         render()
+
 
         document.onkeydown = function (e) {    //对整个页面监听  
             var keyNum = window.event ? e.keyCode : e.which;       //获取被按下的键值  
@@ -105,6 +129,11 @@
 
             }
 
+        }
+
+        function setNumer (){
+           let text = document.getElementById('num');
+           text.innerText = `translationX:${ translationX} translationY:${translationY}`
         }
 
 

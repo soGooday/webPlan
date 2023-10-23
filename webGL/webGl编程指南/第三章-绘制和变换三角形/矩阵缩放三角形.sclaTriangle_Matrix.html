@@ -10,7 +10,9 @@
 
 <body>
     <h3>可以按下按键ADSW</h3>
+    <p><span id="num"></span></p>
     <canvas id='canvas'></canvas>
+
     <script>
         let canvas = document.getElementById('canvas');
         let gl = canvas.getContext('webgl');
@@ -28,16 +30,22 @@
                 gl_FragColor = vec4(1.0,0.0,0.0,1.0);
             }
         `
-
+        // 创建顶点着色器
         let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        // 设置着色器源代码
         gl.shaderSource(vertexShader, vertexShaderSource)
+        // 编译着色器
         gl.compileShader(vertexShader)
 
+        // 创建片元着色器
         let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        // 设置着色器源代码
         gl.shaderSource(fragmentShader, fragmentShaderSouce)
+        // 编译着色器
         gl.compileShader(fragmentShader)
         //创建渲染程序
         let program = gl.createProgram();
+        // 附着顶点着色器和片元着色器到渲染程序
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
@@ -45,23 +53,31 @@
         gl.useProgram(program)
 
 
-
+        //检测着色器链接是否正确
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(program);
         }
+        //  放大缩小的倍数
         let sX = 1.0;
         let sY = 0.1;
+        // 三角形的坐标定点
         let positonArray = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5])
+        // 获取a_Position的变量
         let a_Position = gl.getAttribLocation(program, 'a_Position');
+        // 获取u_mat4的变量
         let u_mat4 = gl.getUniformLocation(program, 'u_mat4');
 
 
 
-
+        // 创建buffer对象
         let buffer = gl.createBuffer();
+        //绑定buffer对象
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        // 向buffer中写入数据
         gl.bufferData(gl.ARRAY_BUFFER, positonArray, gl.STATIC_DRAW)
+        // 向a_Position中传递变量
         gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+        // 开启a_Position
         gl.enableVertexAttribArray(a_Position);
 
 
@@ -72,17 +88,21 @@
 
         
         const render = function () {
+            //设置方法缩小的倍数
             let mate4 = new Float32Array([
                 sX, 0.0, 0.0, 0.0,
                 0.0, sY, 0.0, 0.0,
                 0.0, 0.0, 1.0, 0.0,
                 0.0, 0.0, 0.0, 1.0,
             ])
-
+            // 将矩阵传递进去
             gl.uniformMatrix4fv(u_mat4, false, mate4)
-
+            // 清除画布
             gl.clear(gl.COLOR_BUFFER_BIT);
+            // 绘制三角形
             gl.drawArrays(gl.TRIANGLES, 0, 3)
+
+            setNumer()
         }
         render()
 
@@ -118,8 +138,12 @@
             }
 
         }
+        function setNumer (){
+           let text = document.getElementById('num');
+           text.innerText = `sX:${ sX} sY:${sY}`
+        } 
 
-
+ 
     </script>
 </body>
 
